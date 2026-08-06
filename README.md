@@ -18,9 +18,19 @@
 
 ## 🎯 O QUE É O GOLDENEYE?
 
-**Goldeneye** é um orquestrador de segurança ofensiva que integra **21 ferramentas** de pentest com **inteligência artificial local** (Mistral 7B) e geração automática de relatórios profissionais.
+**Goldeneye** é o copiloto de pentest que você sempre quis.
 
-> ⚡ **Um comando. 21 ferramentas. Relatório pronto.**
+Imagine digitar **um comando** e assistir enquanto 21 ferramentas de segurança ofensiva executam em sequência, uma inteligência artificial analisa cada descoberta, e relatórios profissionais são gerados automaticamente.
+
+Isso é o Goldeneye.
+
+🔍 **Reconhecimento** — DNS, subdomínios, tecnologias  
+📡 **Varredura** — Nmap, Nuclei (4504 templates), OWASP ZAP  
+💉 **Exploração** — SQLMap, Hydra (14M senhas), Searchsploit  
+🧠 **IA Local** — Mistral 7B analisa tudo offline  
+📊 **Entrega** — PDF, DOCX, HTML com gráficos  
+
+> ⚡ **Um comando. 21 ferramentas. Relatório pronto. Zero custo.**
 
 ---
 
