@@ -71,8 +71,8 @@ goldeneye
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/C0unt-Z3r0/goldeneye/main/banner.png" alt="Banner" width="400">
-  <img src="https://raw.githubusercontent.com/C0unt-Z3r0/goldeneye/main/menu.png" alt="Menu" width="400">
+  <img src="https://raw.githubusercontent.com/C0unt-Z3r0/goldeneye/main/banner.png" alt="Banner" width="800">
+  <img src="https://raw.githubusercontent.com/C0unt-Z3r0/goldeneye/main/menu.png" alt="Menu" width="800">
 </p>
 
 ---
