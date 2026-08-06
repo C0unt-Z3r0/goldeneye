@@ -72,7 +72,7 @@ goldeneye
 
 <p align="center">
   <img src="[banner.png](https://github.com/C0unt-Z3r0/goldeneye/blob/main/banner.png?raw=true)" alt="Banner" width="800">
-  <img src="[dashboard.png](https://github.com/C0unt-Z3r0/goldeneye/blob/main/menu.png)" alt="Dashboard" width="800">
+  <img src="[dashboard.png](https://github.com/C0unt-Z3r0/goldeneye/blob/main/menu.png?raw=true)" alt="Dashboard" width="800">
 </p>
 
 ---
