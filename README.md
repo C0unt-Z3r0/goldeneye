@@ -58,7 +58,7 @@ Python 3.11+ | Typer | Rich | SQLite | SQLAlchemy | Ollama + Mistral 7B | WeasyP
 
 ## 🚀 INSTALAÇÃO
 
-```bash
+bash
 git clone https://github.com/C0unt-Z3r0/goldeneye.git
 cd goldeneye
 chmod +x install.sh
@@ -66,6 +66,19 @@ chmod +x install.sh
 source .venv/bin/activate
 goldeneye
 
+---
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="banner.png" alt="Banner" width="400">
+  <img src="dashboard.png" alt="Dashboard" width="400">
+</p>
+
+---
+
+### Easter Egg 007 - martini
+---
 
 ⚠️ DISCLAIMER
 
