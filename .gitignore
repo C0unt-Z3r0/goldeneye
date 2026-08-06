@@ -7,3 +7,8 @@ projects/
 assets/rockyou.txt
 assets/bond_theme.mp3
 pulseaudio/
+hydra.restore
+*.restore
+./hydra.restore
+./assets/rockyou.txt
+./.git/objects/f2/24f876903d439ba54f4357bb3fce9be1b19b04
