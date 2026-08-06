@@ -58,13 +58,14 @@ Python 3.11+ | Typer | Rich | SQLite | SQLAlchemy | Ollama + Mistral 7B | WeasyP
 
 ## 🚀 INSTALAÇÃO
 
-bash
+```bash
 git clone https://github.com/C0unt-Z3r0/goldeneye.git
 cd goldeneye
 chmod +x install.sh
 ./install.sh
 source .venv/bin/activate
 goldeneye
+```
 
 ---
 
@@ -83,11 +84,13 @@ goldeneye
 ⚠️ DISCLAIMER
 
 Apenas para testes autorizados, ambientes de laboratório e fins educacionais.
+
+---
 👨‍💻 AUTOR
 
 C0unt-Z3r0 — Security Researcher & Developer
+---
 
-GitHub | Email
 📄 LICENÇA
 
 MIT License
