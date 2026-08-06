@@ -1,0 +1,40 @@
+# goldeneye/config/default.yaml
+# Configuracao padrao do Goldeneye
+
+goldeneye:
+  version: "1.0.0"
+
+  paths:
+    projects_dir: "~/goldeneye/projects"
+    templates_dir: "~/goldeneye/templates"
+    config_dir: "~/goldeneye/config"
+    logs_dir: "~/goldeneye/logs"
+
+  ui:
+    theme: "goldeneye"
+    show_progress_bars: true
+    date_format: "%d/%m/%Y"
+    time_format: "%H:%M:%S"
+
+  tools:
+    nmap: "nmap"
+    amass: "amass"
+    subfinder: "subfinder"
+    httpx: "httpx"
+    whatweb: "whatweb"
+    nuclei: "nuclei"
+    nikto: "nikto"
+    sqlmap: "sqlmap"
+    crackmapexec: "crackmapexec"
+
+  ai:
+    provider: "openai"
+    model: "gpt-4"
+    temperature: 0.7
+    max_tokens: 4096
+
+  reports:
+    default_type: "both"
+    format: "pdf"
+    include_evidence: true
+    include_graphs: true

@@ -1,0 +1,75 @@
+Metadata-Version: 2.4
+Name: goldeneye
+Version: 1.0.0
+Summary: Goldeneye - Security Assessment Assistant
+Author: c0unt
+License: MIT
+Keywords: pentest,security,vulnerability,assessment,cli
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Information Technology
+Classifier: Topic :: Security
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: rich>=13.7.0
+Requires-Dist: typer>=0.9.0
+Requires-Dist: prompt-toolkit>=3.0.43
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: pydantic-settings>=2.1.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: sqlalchemy>=2.0.23
+Requires-Dist: alembic>=1.13.0
+Requires-Dist: dnspython>=2.4.0
+Requires-Dist: python-whois>=0.8.0
+Requires-Dist: httpx>=0.25.0
+Requires-Dist: lxml>=4.9.0
+Requires-Dist: defusedxml>=0.7.0
+Requires-Dist: jinja2>=3.1.0
+Requires-Dist: weasyprint>=60.0
+Requires-Dist: matplotlib>=3.8.0
+Requires-Dist: openai>=1.6.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: loguru>=0.7.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: black>=23.12.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.7.0; extra == "dev"
+Requires-Dist: pre-commit>=3.6.0; extra == "dev"
+
+# Goldeneye - Security Assessment Assistant
+
+**"I see everything. I miss nothing."**
+
+Goldeneye e um copiloto de consultoria de ciberseguranca.
+Orquestra ferramentas, normaliza dados, analisa vulnerabilidades
+e gera relatorios tecnicos e executivos com apoio de IA.
+
+## Instalacao
+
+cd goldeneye
+pip install -e .
+goldeneye start
+
+## Requisitos
+
+- Python 3.11+
+- Ferramentas de seguranca (Nmap, Amass, Nuclei, etc.)
+
+## Fases do Projeto
+
+- Fase 1 - Fundacao (CLI, banner, estrutura)
+- Fase 2 - Projetos (CRUD, SQLite)
+- Fase 3 - Descoberta automatica
+- Fase 4 - Nmap integrado
+- Fase 5 - IA analisando
+- Fase 6 - Arsenal completo
+- Fase 7 - Relatorios PDF
+- Fase 8 - Polimento final
+
+## Licenca
+
+MIT

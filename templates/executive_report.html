@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório Executivo - Goldeneye</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #B8960F;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #B8960F;
+            margin: 0;
+        }
+        .header h2 {
+            font-size: 14px;
+            color: #666;
+            font-weight: normal;
+        }
+        .risk-meter {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .risk-score {
+            font-size: 72px;
+            font-weight: bold;
+            color: #DC143C;
+        }
+        .risk-label {
+            font-size: 18px;
+            color: #666;
+        }
+        .summary-box {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .stat {
+            display: inline-block;
+            width: 30%;
+            text-align: center;
+            padding: 10px;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #B8960F;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th {
+            background: #B8960F;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .critical { background: #ffe6e6; }
+        .high { background: #fff3e6; }
+        .medium { background: #fffde6; }
+        .footer {
+            margin-top: 40px;
+            font-size: 10px;
+            color: #999;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>👁️ GOLDENEYE</h1>
+    <h2>Relatório Executivo de Segurança</h2>
+</div>
+
+<table>
+    <tr><td><strong>Cliente:</strong></td><td>{{ client }}</td></tr>
+    <tr><td><strong>Alvo:</strong></td><td>{{ target }}</td></tr>
+    <tr><td><strong>Data:</strong></td><td>{{ date }}</td></tr>
+    <tr><td><strong>Tipo:</strong></td><td>{{ assessment_type }}</td></tr>
+</table>
+
+<div class="risk-meter">
+    <div class="risk-score">{{ risk_score }}</div>
+    <div class="risk-label">Score de Risco Geral</div>
+</div>
+
+<div class="summary-box">
+    <h3>Resumo</h3>
+    <p>{{ executive_summary }}</p>
+</div>
+
+<h3>Estatísticas</h3>
+<div class="stat">
+    <div class="stat-number">{{ hosts_count }}</div>
+    <div class="stat-label">Ativos</div>
+</div>
+<div class="stat">
+    <div class="stat-number">{{ vulns_count }}</div>
+    <div class="stat-label">Vulnerabilidades</div>
+</div>
+<div class="stat">
+    <div class="stat-number">{{ critical_count }}</div>
+    <div class="stat-label">Críticas</div>
+</div>
+
+<h3>Principais Riscos</h3>
+<table>
+    <tr>
+        <th>Risco</th>
+        <th>Severidade</th>
+        <th>Impacto</th>
+    </tr>
+    {% for risk in top_risks %}
+    <tr class="{{ risk.severity_class }}">
+        <td>{{ risk.name }}</td>
+        <td>{{ risk.severity }}</td>
+        <td>{{ risk.impact }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>Recomendações Imediatas</h3>
+<ol>
+    {% for rec in recommendations %}
+    <li>{{ rec }}</li>
+    {% endfor %}
+</ol>
+
+<div class="footer">
+    <p>Goldeneye v1.0 — Relatório gerado automaticamente. Confidencial.</p>
+</div>
+
+</body>
+</html>

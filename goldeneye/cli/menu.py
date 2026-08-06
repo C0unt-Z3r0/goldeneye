@@ -1,0 +1,302 @@
+"""
+goldeneye/cli/menu.py
+Sistema de menus interativos do Goldeneye.
+"""
+
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.style import Style
+from prompt_toolkit import prompt
+from prompt_toolkit.styles import Style as PTStyle
+from prompt_toolkit.completion import WordCompleter
+
+from goldeneye.core.project_manager import ProjectManager
+from goldeneye.core.models import AssessmentType
+
+console = Console()
+
+GOLD = Style(color="#FFD700", bold=True)
+GOLD_DIM = Style(color="#B8960F")
+GREY = Style(color="#666666")
+CYAN = Style(color="#00CED1")
+GREEN = Style(color="#00FF7F")
+
+PROMPT_STYLE = PTStyle.from_dict({
+    "prompt": "#FFD700 bold",
+    "": "#FFFFFF",
+})
+
+MAIN_COMMANDS = WordCompleter(
+    ["1", "2", "3", "4", "5", "0",
+     "martini", "bond", "help", "clear", "exit"],
+    ignore_case=True,
+)
+
+
+def clear_and_show_header(title: str = None):
+    """Limpa a tela e mostra o header do Goldeneye."""
+    from goldeneye.cli.banner import show_banner
+    show_banner()
+    if title:
+        console.print(f"[gold1]{title}[/gold1]")
+        console.print()
+
+
+def main_menu() -> str:
+    """Exibe o menu principal e retorna a opcao escolhida."""
+    
+    clear_and_show_header()
+
+    menu = Table(show_header=False, box=None, padding=(0, 4))
+    menu.add_column(style=GOLD)
+    menu.add_column(style=Style(color="#FFFFFF"))
+
+    menu.add_row("[1]", "Novo Projeto")
+    menu.add_row("[2]", "Retomar Projeto")
+    menu.add_row("[3]", "Gerar Relatorio")
+    menu.add_row("[4]", "Configuracoes")
+    menu.add_row("[5]", "Sobre")
+    menu.add_row("[0]", "Sair")
+
+    menu_panel = Panel(
+        menu,
+        border_style=GOLD_DIM,
+        padding=(1, 2),
+    )
+
+    console.print(menu_panel)
+    console.print()
+
+    choice = prompt(
+        "goldeneye> ",
+        style=PROMPT_STYLE,
+        completer=MAIN_COMMANDS,
+    ).strip().lower()
+
+    if choice == "martini":
+        from goldeneye.cli.banner import show_easter_egg
+        show_easter_egg("martini")
+        return main_menu()
+
+    if choice == "bond":
+        from goldeneye.cli.banner import show_easter_egg
+        show_easter_egg("bond")
+        return main_menu()
+
+    if choice == "clear":
+        return main_menu()
+
+    if choice == "help":
+        show_help()
+        return main_menu()
+
+    return choice
+
+
+def show_help():
+    """Exibe ajuda do Goldeneye."""
+    clear_and_show_header("AJUDA")
+    help_panel = Panel(
+        "Comandos disponiveis:\n\n"
+        "  1 - Criar um novo projeto de avaliacao\n"
+        "  2 - Retomar um projeto salvo\n"
+        "  3 - Gerar relatorios (tecnico e executivo)\n"
+        "  4 - Configuracoes do Goldeneye\n"
+        "  5 - Sobre o Goldeneye\n"
+        "  0 - Sair\n\n"
+        "Comandos secretos:\n"
+        "  martini - Modo agente 007\n"
+        "  bond    - Dossier do agente\n"
+        "  clear   - Limpar tela\n"
+        "  help    - Esta mensagem",
+        title="AJUDA",
+        border_style=GOLD_DIM,
+    )
+    console.print(help_panel)
+    console.print()
+    prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
+
+
+def new_project_form() -> dict:
+    """Formulario de novo projeto. Retorna os dados preenchidos."""
+    clear_and_show_header("NOVO PROJETO")
+    
+    console.print("[cyan]Preencha as informacoes do projeto:[/cyan]\n")
+    
+    name = prompt("  Nome do projeto: ", style=PROMPT_STYLE)
+    client = prompt("  Nome do cliente : ", style=PROMPT_STYLE)
+    target = prompt("  Alvo (IP/Dominio): ", style=PROMPT_STYLE)
+    
+    console.print("\n[cyan]Tipo de avaliacao:[/cyan]")
+    console.print("  [1] Externo")
+    console.print("  [2] Interno")
+    console.print("  [3] Web")
+    console.print("  [4] Completo")
+    console.print("  [5] Configuracao\n")
+    
+    tipo = prompt("  Escolha [1-5] (ENTER para Externo): ", style=PROMPT_STYLE).strip()
+    
+    tipo_map = {
+        "1": AssessmentType.EXTERNO,
+        "2": AssessmentType.INTERNO,
+        "3": AssessmentType.WEB,
+        "4": AssessmentType.COMPLETO,
+        "5": AssessmentType.CONFIG,
+    }
+    assessment_type = tipo_map.get(tipo, AssessmentType.EXTERNO)
+    
+    try:
+        pm = ProjectManager()
+        project = pm.create(name=name, client=client, target=target, assessment_type=assessment_type)
+        
+        console.print(f"\n[green][+] Projeto '{name}' criado com sucesso![/green]")
+        console.print(f"[cyan]    ID      : {project.id}[/cyan]")
+        console.print(f"[cyan]    Cliente : {client}[/cyan]")
+        console.print(f"[cyan]    Alvo    : {target}[/cyan]")
+        console.print(f"[cyan]    Tipo    : {assessment_type.value}[/cyan]")
+        console.print(f"[cyan]    Pasta   : {project.project_path}[/cyan]\n")
+    except Exception as e:
+        console.print(f"\n[red][!] Erro ao criar projeto: {e}[/red]\n")
+    
+    prompt("Pressione ENTER para continuar...", style=PROMPT_STYLE)
+    
+    return {"name": name, "client": client, "target": target}
+
+
+def resume_project_list() -> int:
+    """Lista projetos salvos e retorna o ID escolhido."""
+    clear_and_show_header("RETOMAR PROJETO")
+    
+    pm = ProjectManager()
+    projects = pm.list_all()
+    
+    if not projects:
+        console.print("[grey][*] Nenhum projeto salvo encontrado.[/grey]\n")
+        prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
+        return 0
+    
+    table = Table(title="Projetos Salvos", border_style=GOLD_DIM)
+    table.add_column("ID", style=CYAN)
+    table.add_column("Nome", style=GOLD)
+    table.add_column("Cliente")
+    table.add_column("Alvo")
+    table.add_column("Tipo")
+    table.add_column("Status")
+    table.add_column("Atualizado em")
+    
+    for p in projects:
+        table.add_row(
+            str(p.id),
+            p.name,
+            p.client,
+            p.target[:30] + "..." if len(p.target) > 30 else p.target,
+            p.assessment_type.value if p.assessment_type else "-",
+            p.status.value if p.status else "-",
+            p.updated_at.strftime("%d/%m/%Y %H:%M") if p.updated_at else "-",
+        )
+    
+    console.print(table)
+    console.print()
+    
+    choice = prompt(
+        "  ID do projeto para retomar (0 = voltar): ",
+        style=PROMPT_STYLE,
+    ).strip()
+    
+    try:
+        return int(choice)
+    except ValueError:
+        return 0
+
+
+def generate_report_screen(project_data=None, output_dir=None):
+    """Tela de geracao de relatorio."""
+    from goldeneye.reports.pdf_generator import generate_reports
+    
+    clear_and_show_header("GERAR RELATORIO")
+    
+    if project_data and output_dir:
+        console.print("[cyan]Gerando relatorios...[/cyan]\n")
+        tech, exec_ = generate_reports(project_data, output_dir)
+        if tech:
+            console.print(f"[green][+] Relatorio Tecnico: {tech}[/green]")
+        if exec_:
+            console.print(f"[green][+] Relatorio Executivo: {exec_}[/green]")
+        console.print()
+        prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
+        return
+    
+    pm = ProjectManager()
+    projects = pm.list_all()
+    if not projects:
+        console.print("[grey][*] Nenhum projeto disponivel.[/grey]\n")
+        prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
+        return
+    
+    table = Table(title="Selecione o Projeto", border_style=GOLD_DIM)
+    table.add_column("ID", style=CYAN)
+    table.add_column("Nome", style=GOLD)
+    table.add_column("Cliente")
+    table.add_column("Status")
+    for p in projects:
+        table.add_row(str(p.id), p.name, p.client, p.status.value if p.status else "-")
+    console.print(table)
+    console.print()
+    console.print("[grey][*] Escolha um projeto ativo no menu para gerar relatorios.[/grey]\n")
+    prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
+
+def settings_screen():
+    """Tela de configuracoes."""
+    clear_and_show_header("CONFIGURACOES")
+    console.print("[grey][*] Em desenvolvimento...[/grey]\n")
+    console.print("[cyan]Banco de dados:[/cyan] ~/.goldeneye/goldeneye.db")
+    console.print("[cyan]Projetos      :[/cyan] ~/goldeneye/projects/\n")
+    prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
+
+
+def about_screen():
+    """Tela sobre."""
+    clear_and_show_header("SOBRE")
+    console.print(
+        Panel(
+            "Goldeneye v1.0\n"
+            "Security Assessment Assistant\n\n"
+            "Desenvolvido para ser o copiloto definitivo\n"
+            "de consultores de ciberseguranca.\n\n"
+            "Stack: Python 3.11+ | Typer | Rich | SQLite | OpenAI",
+            title="SOBRE",
+            border_style=GOLD_DIM,
+        )
+    )
+    console.print()
+    prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
+
+def discovery_screen(project_name: str, target: str):
+    """Tela de descoberta automatica."""
+    from goldeneye.discovery.orchestrator import run_discovery
+    
+    clear_and_show_header(f"DESCOBERTA AUTOMATICA - {project_name}")
+    
+    console.print(f"[cyan]Alvo: {target}[/cyan]")
+    console.print(f"[cyan]Projeto: {project_name}[/cyan]")
+    console.print()
+    
+    confirm = prompt(
+        "Iniciar descoberta automatica? [S/n]: ",
+        style=PROMPT_STYLE,
+    ).strip().lower()
+    
+    if confirm in ["", "s", "y", "sim", "yes"]:
+        console.print("\n[gold1]>>> INICIANDO FASE DE RECONHECIMENTO <<<[/gold1]")
+        result = run_discovery(target, project_name)
+        
+        console.print(f"\n[green][+] Descoberta concluida![/green]")
+        console.print(f"[cyan][*] {len(result['subdomains'])} subdominios[/cyan]")
+        console.print(f"[cyan][*] {len(result['hosts_alive'])} hosts vivos[/cyan]")
+        console.print(f"[cyan][*] {len(result['fingerprints'])} sites analisados[/cyan]")
+        console.print()
+    else:
+        console.print("[grey][*] Descoberta cancelada.[/grey]")
+    
+    prompt("Pressione ENTER para continuar...", style=PROMPT_STYLE)
