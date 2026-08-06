@@ -1,33 +1,85 @@
-# Goldeneye - Security Assessment Assistant
+# 👁️ G O L D E N E Y E
 
-**"I see everything. I miss nothing."**
+### *"I see everything. I miss nothing."*
 
-Goldeneye e um copiloto de consultoria de ciberseguranca.
-Orquestra ferramentas, normaliza dados, analisa vulnerabilidades
-e gera relatorios tecnicos e executivos com apoio de IA.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python&style=for-the-badge" alt="Python">
+  <img src="https://img.shields.io/badge/Tools-21-red?style=for-the-badge" alt="Tools">
+  <img src="https://img.shields.io/badge/IA-Mistral%207B-purple?style=for-the-badge" alt="IA">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
+</p>
 
-## Instalacao
+<p align="center">
+  <b>Security Assessment Assistant | Orquestrador de Pentest | IA Local</b>
+</p>
 
+---
+
+## 🎯 O QUE É O GOLDENEYE?
+
+**Goldeneye** é um orquestrador de segurança ofensiva que integra **21 ferramentas** de pentest com **inteligência artificial local** (Mistral 7B) e geração automática de relatórios profissionais.
+
+> ⚡ **Um comando. 21 ferramentas. Relatório pronto.**
+
+---
+
+## 🔥 DIFERENCIAIS
+
+| Característica | Goldeneye | Outras |
+|---------------|-----------|--------|
+| 🧠 IA Local | ✅ Mistral 7B (offline) | ❌ API paga |
+| 🔧 Ferramentas | ✅ 21 integradas | ❌ 1-5 |
+| 📊 Relatórios | ✅ PDF + DOCX + HTML | ❌ Manual |
+| ⚡ Automação | ✅ Full Auto | ❌ Scripts |
+| 💰 Custo | ✅ 100% GRÁTIS | ❌ Licenças |
+
+---
+
+## ⚙️ STACK
+
+Python 3.11+ | Typer | Rich | SQLite | SQLAlchemy | Ollama + Mistral 7B | WeasyPrint | python-docx | Matplotlib | Nmap | Nuclei | ZAP | SQLMap | Hydra | Gobuster | CME | Searchsploit | Nikto | WPScan | TestSSL | LinPEAS | Hashcat
+
+---
+
+## 🔧 21 FERRAMENTAS
+
+**🔍 RECON:** Descoberta Automática, Amass, Subfinder, Httpx, WhatWeb
+
+**📡 SCAN:** Nmap, Nuclei (4504 templates), OWASP ZAP, Nikto, Gobuster, WPScan
+
+**💉 EXPLORAÇÃO:** SQLMap, Hydra (Rockyou 14M), CrackMapExec, Searchsploit (1851 exploits)
+
+**🔐 ANÁLISE:** TestSSL/TLS, LinPEAS, Hashcat, Verificador de Falsos Positivos
+
+**🧠 IA + RELATÓRIOS:** Mistral 7B, PDF, DOCX, HTML Interativo, Dashboard
+
+---
+
+## 🚀 INSTALAÇÃO
+
+```bash
+git clone https://github.com/C0unt-Z3r0/goldeneye.git
 cd goldeneye
-pip install -e .
-goldeneye start
+chmod +x install.sh
+./install.sh
+source .venv/bin/activate
+goldeneye
 
-## Requisitos
 
-- Python 3.11+
-- Ferramentas de seguranca (Nmap, Amass, Nuclei, etc.)
+⚠️ DISCLAIMER
 
-## Fases do Projeto
+Apenas para testes autorizados, ambientes de laboratório e fins educacionais.
+👨‍💻 AUTOR
 
-- Fase 1 - Fundacao (CLI, banner, estrutura)
-- Fase 2 - Projetos (CRUD, SQLite)
-- Fase 3 - Descoberta automatica
-- Fase 4 - Nmap integrado
-- Fase 5 - IA analisando
-- Fase 6 - Arsenal completo
-- Fase 7 - Relatorios PDF
-- Fase 8 - Polimento final
+C0unt-Z3r0 — Security Researcher & Developer
 
-## Licenca
+GitHub | Email
+📄 LICENÇA
 
-MIT
+MIT License
+
+👁️ "I see everything. I miss nothing."
+
+
+
