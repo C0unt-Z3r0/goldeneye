@@ -71,7 +71,7 @@ goldeneye
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="banner.png" alt="Banner" width="400">
+  <img src="[banner.png](https://github.com/C0unt-Z3r0/goldeneye/blob/main/banner.png?raw=true)" alt="Banner" width="400">
   <img src="dashboard.png" alt="Dashboard" width="400">
 </p>
 
