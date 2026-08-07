@@ -382,32 +382,7 @@ class Session:
                 pass
         
         console.print(f"\n[cyan]Alvos: {len(targets)} URLs[/cyan]")
-        console.print(f"\n[gold1]Modo de Exploracao:[/gold1]")
-        console.print(f"  [1] Basico (apenas detectar)")
-        console.print(f"  [2] Enumerar Bancos (--dbs)")
-        console.print(f"  [3] Enumerar Tabelas (--tables)")
-        console.print(f"  [4] Extrair Dados (--dump)")
-        console.print(f"  [5] Personalizado (digitar flags)\n")
-        exp_choice = prompt("  Escolha [1-5] (ENTER=1): ", style=PROMPT_STYLE).strip()
-        extra_flags = ""
-        if exp_choice == "2":
-            extra_flags = " --dbs"
-        elif exp_choice == "3":
-            db = prompt("  Nome do banco: ", style=PROMPT_STYLE).strip()
-            extra_flags = f" -D {db} --tables" if db else " --tables"
-        elif exp_choice == "4":
-            db = prompt("  Nome do banco: ", style=PROMPT_STYLE).strip()
-            table = prompt("  Nome da tabela: ", style=PROMPT_STYLE).strip()
-            if db and table:
-                extra_flags = f" -D {db} -T {table} --dump"
-            else:
-                extra_flags = " --dump"
-        elif exp_choice == "5":
-            extra_flags = " " + prompt("  Flags SQLMap: ", style=PROMPT_STYLE).strip()
-        if extra_flags:
-            for i, t in enumerate(targets):
-                targets[i] = t + extra_flags
-        console.print(f"\n[yellow][!] SQLMap pode levar varios minutos...[/yellow]\n")
+        console.print("[yellow][!] SQLMap pode levar varios minutos...[/yellow]\n")
         confirm = prompt("Continuar? [S/n]: ", style=PROMPT_STYLE).strip().lower()
         if confirm not in ["", "s", "y", "sim"]:
             return
