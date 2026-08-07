@@ -12,3 +12,18 @@ hydra.restore
 ./hydra.restore
 ./assets/rockyou.txt
 ./.git/objects/f2/24f876903d439ba54f4357bb3fce9be1b19b04
+# Backups
+*.bak
+*.bak2
+*.bak3
+
+# Scans temporários
+*.json
+
+# Scripts de teste
+capturar.sh
+demo.sh
+
+# Outros
+pulseaudio/
+hydra.restore
