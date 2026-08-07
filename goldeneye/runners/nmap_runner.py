@@ -45,6 +45,10 @@ def run_nmap(
     elif scan_type == "full":
         cmd.extend(["-sV", "-sC", "-O", "-p", "1-65535"])
     elif scan_type == "stealth":
+        import os
+    if os.environ.get("GOLDENEYE_ANON"):
+        cmd.extend(["-sS", "-sV", "--top-ports", "1000", "--randomize-hosts", "-T2"])
+    else:
         cmd.extend(["-sS", "-sV", "-O", "--top-ports", "1000"])
     
     # Portas personalizadas

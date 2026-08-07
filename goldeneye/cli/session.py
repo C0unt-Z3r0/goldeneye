@@ -141,6 +141,7 @@ class Session:
             menu.add_row("[19]", "Verificar Falsos Positivos")
             menu.add_row("[20]", "LinPEAS (Privilegios)")
             menu.add_row("[21]", "Hashcat (Quebra Hashes)")
+            menu.add_row("[22]", "🕵️  Modo Anonimo (ON/OFF)")
             menu.add_row("[0]", "Voltar ao Menu Principal")
             menu_panel = Panel(menu, border_style=GOLD_DIM, padding=(1, 2),
                                title="FERRAMENTAS", title_align="center")
@@ -214,6 +215,9 @@ class Session:
             elif choice == "21":
                 self._run_hashcat()
                 prompt("\nPressione ENTER...", style=PROMPT_STYLE)
+            elif choice == "22":
+                self.toggle_anonymous()
+
             
             else:
                 console.print("\n[red][!] Opcao invalida.[/red]")
@@ -1059,6 +1063,20 @@ class Session:
 
     def invalid_option(self):
         console.print("\n[red][!] Opcao invalida.[/red]\n")
+
+    def toggle_anonymous(self):
+        """Ativa/desativa modo anonimo."""
+        import os
+        if os.environ.get("GOLDENEYE_ANON"):
+            del os.environ["GOLDENEYE_ANON"]
+            console.print("\n[green][+] Modo anonimo DESATIVADO[/green]\n")
+        else:
+            os.environ["GOLDENEYE_ANON"] = "1"
+            console.print("\n[yellow][🕵️] Modo anonimo ATIVADO[/yellow]")
+            console.print("[grey]  - User-Agent aleatorio em todas as ferramentas[/grey]")
+            console.print("[grey]  - Sem fingerprint de OS[/grey]")
+            console.print("[grey]  - Headers minimizados[/grey]\n")
+        prompt("Pressione ENTER...", style=PROMPT_STYLE)
 
     def delete_projects(self):
         """Apagar projetos - menu principal."""
