@@ -55,8 +55,9 @@ def main_menu() -> str:
     menu.add_row("[1]", "Novo Projeto")
     menu.add_row("[2]", "Retomar Projeto")
     menu.add_row("[3]", "Gerar Relatorio")
-    menu.add_row("[4]", "Configuracoes")
-    menu.add_row("[5]", "Sobre")
+    menu.add_row("[4]", "Apagar Projetos")
+    menu.add_row("[5]", "Configuracoes")
+    menu.add_row("[6]", "Sobre")
     menu.add_row("[0]", "Sair")
 
     menu_panel = Panel(
