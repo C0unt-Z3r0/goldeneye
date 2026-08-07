@@ -214,6 +214,7 @@ class Session:
             elif choice == "21":
                 self._run_hashcat()
                 prompt("\nPressione ENTER...", style=PROMPT_STYLE)
+            
             else:
                 console.print("\n[red][!] Opcao invalida.[/red]")
                 prompt("Pressione ENTER...", style=PROMPT_STYLE)
@@ -769,6 +770,36 @@ class Session:
         results = run_linpeas(scan_dir, self.current_target)
         display_linpeas_results(results)
 
+    def _delete_project(self):
+        """Apaga o projeto atual."""
+        from goldeneye.core.project_manager import ProjectManager
+        import shutil
+        
+        console.print(f"\n[red]🗑️  APAGAR PROJETO: {self.current_project_name}[/red]")
+        console.print(f"[yellow][!] Esta acao e IRREVERSIVEL![/yellow]")
+        console.print(f"[yellow]    Pasta: {self.current_project_path}[/yellow]\n")
+        
+        confirm = prompt("Digite o nome do projeto para confirmar: ", style=PROMPT_STYLE).strip()
+        
+        if confirm == self.current_project_name:
+            pm = ProjectManager()
+            pm.delete(self.current_project_id)
+            
+            # Apagar pasta
+            if self.current_project_path and self.current_project_path.exists():
+                shutil.rmtree(self.current_project_path)
+            
+            console.print(f"\n[red][+] Projeto '{self.current_project_name}' APAGADO![/red]\n")
+            self.current_project_id = None
+            self.current_project_name = None
+            self.current_project_path = None
+            prompt("Pressione ENTER para voltar ao menu principal...", style=PROMPT_STYLE)
+            self._project_menu()
+            return  # Sai do menu de projeto
+        else:
+            console.print(f"\n[yellow][!] Nome incorreto. Projeto NAO foi apagado.[/yellow]\n")
+            prompt("Pressione ENTER...", style=PROMPT_STYLE)
+
     def _check_false_positives(self):
         """Verifica falsos positivos cruzando resultados."""
         from goldeneye.cli.menu import clear_and_show_header
@@ -850,6 +881,36 @@ class Session:
         scan_dir = self.current_project_path / "scans" if self.current_project_path else Path(".")
         results = run_linpeas(scan_dir, self.current_target)
         display_linpeas_results(results)
+
+    def _delete_project(self):
+        """Apaga o projeto atual."""
+        from goldeneye.core.project_manager import ProjectManager
+        import shutil
+        
+        console.print(f"\n[red]🗑️  APAGAR PROJETO: {self.current_project_name}[/red]")
+        console.print(f"[yellow][!] Esta acao e IRREVERSIVEL![/yellow]")
+        console.print(f"[yellow]    Pasta: {self.current_project_path}[/yellow]\n")
+        
+        confirm = prompt("Digite o nome do projeto para confirmar: ", style=PROMPT_STYLE).strip()
+        
+        if confirm == self.current_project_name:
+            pm = ProjectManager()
+            pm.delete(self.current_project_id)
+            
+            # Apagar pasta
+            if self.current_project_path and self.current_project_path.exists():
+                shutil.rmtree(self.current_project_path)
+            
+            console.print(f"\n[red][+] Projeto '{self.current_project_name}' APAGADO![/red]\n")
+            self.current_project_id = None
+            self.current_project_name = None
+            self.current_project_path = None
+            prompt("Pressione ENTER para voltar ao menu principal...", style=PROMPT_STYLE)
+            self._project_menu()
+            return  # Sai do menu de projeto
+        else:
+            console.print(f"\n[yellow][!] Nome incorreto. Projeto NAO foi apagado.[/yellow]\n")
+            prompt("Pressione ENTER...", style=PROMPT_STYLE)
 
     def _check_false_positives(self):
         """Verifica falsos positivos."""
@@ -998,6 +1059,67 @@ class Session:
 
     def invalid_option(self):
         console.print("\n[red][!] Opcao invalida.[/red]\n")
+
+    def delete_projects(self):
+        """Apagar projetos - menu principal."""
+        from goldeneye.cli.menu import clear_and_show_header
+        from goldeneye.core.project_manager import ProjectManager
+        import shutil
+        
+        clear_and_show_header("🗑️  APAGAR PROJETOS")
+        
+        pm = ProjectManager()
+        projects = pm.list_all()
+        
+        if not projects:
+            console.print("[grey][*] Nenhum projeto salvo.[/grey]\n")
+            prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
+            return
+        
+        console.print(f"\n[cyan]Projetos salvos ({len(projects)}):[/cyan]\n")
+        for i, p in enumerate(projects, 1):
+            console.print(f"  [{i}] {p.name} | {p.client} | {p.target}")
+        
+        console.print(f"\n  [A] APAGAR TODOS")
+        console.print(f"  [0] Voltar\n")
+        
+        choice = prompt("  Escolha: ", style=PROMPT_STYLE).strip()
+        
+        if choice == "0":
+            return
+        elif choice.upper() == "A":
+            console.print(f"\n[red][!] APAGAR TODOS os {len(projects)} projetos![/red]")
+            confirm = prompt("Digite 'APAGAR TUDO' para confirmar: ", style=PROMPT_STYLE).strip()
+            if confirm == "APAGAR TUDO":
+                for p in projects:
+                    pm.delete(p.id)
+                    if p.project_path:
+                        path = Path(p.project_path) if not isinstance(p.project_path, Path) else p.project_path
+                        if path.exists():
+                            shutil.rmtree(path)
+                console.print(f"\n[red][+] {len(projects)} projetos apagados![/red]\n")
+            else:
+                console.print(f"\n[yellow][!] Cancelado.[/yellow]\n")
+        else:
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(projects):
+                    p = projects[idx]
+                    console.print(f"\n[red]Apagar: {p.name}?[/red]")
+                    confirm = prompt("Digite 'SIM' para confirmar: ", style=PROMPT_STYLE).strip()
+                    if confirm.upper() == "SIM":
+                        pm.delete(p.id)
+                        if p.project_path:
+                            path = Path(p.project_path) if not isinstance(p.project_path, Path) else p.project_path
+                            if path.exists():
+                                shutil.rmtree(path)
+                        console.print(f"\n[red][+] '{p.name}' apagado![/red]\n")
+                    else:
+                        console.print(f"\n[yellow][!] Cancelado.[/yellow]\n")
+            except ValueError:
+                pass
+        
+        prompt("Pressione ENTER para voltar...", style=PROMPT_STYLE)
 
     def goodbye(self):
         console.clear()

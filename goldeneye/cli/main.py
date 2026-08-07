@@ -38,8 +38,10 @@ def main():
             elif choice == "3":
                 session.generate_report()
             elif choice == "4":
-                session.settings()
+                session.delete_projects()
             elif choice == "5":
+                session.settings()
+            elif choice == "6":
                 session.about()
             else:
                 session.invalid_option()
