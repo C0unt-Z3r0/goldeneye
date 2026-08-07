@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.db
+projects/
+assets/rockyou.txt
+assets/bond_theme.mp3
+.git/
+*.bak
+*.json
+pulseaudio/
