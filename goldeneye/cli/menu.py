@@ -35,9 +35,8 @@ MAIN_COMMANDS = WordCompleter(
 
 
 def clear_and_show_header(title: str = None):
-    """Limpa a tela e mostra o header do Goldeneye."""
-    from goldeneye.cli.banner import show_banner
-    show_banner()
+    """Limpa a tela e mostra apenas o titulo."""
+    console.clear()
     if title:
         console.print(f"[gold1]{title}[/gold1]")
         console.print()

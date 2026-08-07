@@ -57,12 +57,23 @@ def display_sqlmap_results(results: List[Dict], targets: List[str]):
     console.print(f"\n[gold1]═══ RESULTADOS SQLMAP ═══[/gold1]")
     
     found = False
-    for target in targets:
-        for result in results:
-            if result.get("url") == target and result.get("vulnerable"):
-                found = True
-                console.print(f"\n[red][!] SQL INJECTION ENCONTRADA![/red]")
-                console.print(f"[red]    URL: {target}[/red]")
+    for result in results:
+        if result.get("vulnerable"):
+            found = True
+            console.print(f"\n[red][!] SQL INJECTION CONFIRMADA![/red]")
+            console.print(f"[red]    URL: {result.get('url', '')}[/red]")
+            
+            if result.get("databases"):
+                console.print(f"\n[red]🗄️  Bancos de Dados ({result.get('db_count', 0)}):[/red]")
+                for db in result.get("databases", []):
+                    console.print(f"    [red][*] {db}[/red]")
+            
+            if result.get("tables"):
+                console.print(f"\n[yellow]📊 Tabelas: {result.get('tables')}[/yellow]")
+            
+            if result.get("dumped"):
+                console.print(f"\n[red]🔑 DADOS EXTRAÍDOS! {result.get('entries')} registros![/red]")
+                console.print(f"[green]    ✓ Prova de conceito completa[/green]")
     
     if not found:
         console.print(f"\n[green][+] Nenhuma SQL Injection encontrada.[/green]")
