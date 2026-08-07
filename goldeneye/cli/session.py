@@ -355,8 +355,59 @@ class Session:
                     targets.append(f"{scheme}://{ip}:{port}")
         if not targets:
             targets.append(f"http://{self.current_target}")
-        console.print(f"[cyan]Alvos: {len(targets)} URLs[/cyan]")
-        console.print("[yellow][!] SQLMap pode levar varios minutos...[/yellow]\n")
+        
+        # Opção de adicionar URLs manuais
+        console.print(f"\n[cyan]Alvos encontrados: {len(targets)}[/cyan]")
+        for i, t in enumerate(targets, 1):
+            console.print(f"  [{i}] {t}")
+        
+        console.print(f"\n  [A] Usar todos os alvos encontrados")
+        console.print(f"  [M] Digitar URL manualmente")
+        console.print(f"  [0] Voltar\n")
+        
+        choice = prompt("  Escolha: ", style=PROMPT_STYLE).strip()
+        
+        if choice == "0":
+            return
+        elif choice.upper() == "M":
+            manual_url = prompt("  URL (ex: http://alvo.com/pagina.php?id=1): ", style=PROMPT_STYLE).strip()
+            if manual_url:
+                targets = [manual_url]
+        elif choice.upper() != "A":
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(targets):
+                    targets = [targets[idx]]
+            except ValueError:
+                pass
+        
+        console.print(f"\n[cyan]Alvos: {len(targets)} URLs[/cyan]")
+        console.print(f"\n[gold1]Modo de Exploracao:[/gold1]")
+        console.print(f"  [1] Basico (apenas detectar)")
+        console.print(f"  [2] Enumerar Bancos (--dbs)")
+        console.print(f"  [3] Enumerar Tabelas (--tables)")
+        console.print(f"  [4] Extrair Dados (--dump)")
+        console.print(f"  [5] Personalizado (digitar flags)\n")
+        exp_choice = prompt("  Escolha [1-5] (ENTER=1): ", style=PROMPT_STYLE).strip()
+        extra_flags = ""
+        if exp_choice == "2":
+            extra_flags = " --dbs"
+        elif exp_choice == "3":
+            db = prompt("  Nome do banco: ", style=PROMPT_STYLE).strip()
+            extra_flags = f" -D {db} --tables" if db else " --tables"
+        elif exp_choice == "4":
+            db = prompt("  Nome do banco: ", style=PROMPT_STYLE).strip()
+            table = prompt("  Nome da tabela: ", style=PROMPT_STYLE).strip()
+            if db and table:
+                extra_flags = f" -D {db} -T {table} --dump"
+            else:
+                extra_flags = " --dump"
+        elif exp_choice == "5":
+            extra_flags = " " + prompt("  Flags SQLMap: ", style=PROMPT_STYLE).strip()
+        if extra_flags:
+            for i, t in enumerate(targets):
+                targets[i] = t + extra_flags
+        console.print(f"\n[yellow][!] SQLMap pode levar varios minutos...[/yellow]\n")
         confirm = prompt("Continuar? [S/n]: ", style=PROMPT_STYLE).strip().lower()
         if confirm not in ["", "s", "y", "sim"]:
             return
