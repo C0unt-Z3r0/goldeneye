@@ -88,9 +88,7 @@ def run_sqlmap_batch(targets: List[str], output_dir: Path) -> List[Dict]:
             db_section = re.search(r"available databases", content)
             if db_section:
                 result["vulnerable"] = True
-                # Pegar tudo depois de "available databases [N]:"
                 start = db_section.end()
-                # Encontrar todos os [*] [nome_banco]
                 dbs = re.findall(r'\[\*\]\s*\[?([a-zA-Z_]\w*)\]?', content[start:start+1000])
                 dbs = [d for d in dbs if d not in ['ending', 'WARNING', 'INFO', 'ERROR']]
                 result["databases"] = dbs
@@ -98,6 +96,25 @@ def run_sqlmap_batch(targets: List[str], output_dir: Path) -> List[Dict]:
                 console.print(f"[red][!] {len(dbs)} bancos encontrados:[/red]")
                 for db in dbs:
                     console.print(f"    [red][*] {db}[/red]")
+            
+            # Extrair tabelas
+            tables_section = re.search(r"Database: (\w+)", content)
+            tables_count = re.search(r"\[(\d+) tables?\]", content)
+            if tables_section and tables_count:
+                db_name = tables_section.group(1)
+                table_count = tables_count.group(1)
+                console.print(f"[red][!] {table_count} tabelas em {db_name}:[/red]")
+                result["tables"] = table_count
+            
+            # Extrair dados dump
+            dump_section = re.search(r"Table: (\w+)", content)
+            dump_count = re.search(r"\[(\d+) entr", content)
+            if dump_section and dump_count:
+                table_name = dump_section.group(1)
+                entry_count = dump_count.group(1)
+                console.print(f"[red][!] {entry_count} registros extraidos da tabela {table_name}![/red]")
+                result["dumped"] = True
+                result["entries"] = entry_count
             
             results.append(result)
     
