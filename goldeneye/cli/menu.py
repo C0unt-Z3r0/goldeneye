@@ -29,7 +29,7 @@ PROMPT_STYLE = PTStyle.from_dict({
 
 MAIN_COMMANDS = WordCompleter(
     ["1", "2", "3", "4", "5", "0",
-     "martini", "bond", "help", "clear", "exit"],
+     "martini", "bond", "007", "tetris", "help", "clear", "exit"],
     ignore_case=True,
 )
 
@@ -74,6 +74,10 @@ def main_menu() -> str:
         completer=MAIN_COMMANDS,
     ).strip().lower()
 
+    if choice in ["tetris", "007"]:
+        from goldeneye.cli.banner import show_easter_egg
+        show_easter_egg("tetris")
+        return main_menu()
     if choice == "martini":
         from goldeneye.cli.banner import show_easter_egg
         show_easter_egg("martini")
