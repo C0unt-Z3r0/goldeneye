@@ -1,12 +1,6 @@
 README.md
 pyproject.toml
 goldeneye/__init__.py
-goldeneye.egg-info/PKG-INFO
-goldeneye.egg-info/SOURCES.txt
-goldeneye.egg-info/dependency_links.txt
-goldeneye.egg-info/entry_points.txt
-goldeneye.egg-info/requires.txt
-goldeneye.egg-info/top_level.txt
 goldeneye/analyzers/__init__.py
 goldeneye/analyzers/ai_analyzer.py
 goldeneye/analyzers/false_positive_checker.py
@@ -66,3 +60,9 @@ goldeneye/runners/wpscan_runner.py
 goldeneye/runners/zap_runner.py
 goldeneye/utils/__init__.py
 goldeneye/utils/config.py
+goldeneye_security.egg-info/PKG-INFO
+goldeneye_security.egg-info/SOURCES.txt
+goldeneye_security.egg-info/dependency_links.txt
+goldeneye_security.egg-info/entry_points.txt
+goldeneye_security.egg-info/requires.txt
+goldeneye_security.egg-info/top_level.txt
