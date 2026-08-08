@@ -1,0 +1,2 @@
+[console_scripts]
+goldeneye = goldeneye.cli.main:app

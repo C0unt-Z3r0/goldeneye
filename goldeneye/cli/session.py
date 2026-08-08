@@ -142,6 +142,7 @@ class Session:
             menu.add_row("[20]", "LinPEAS (Privilegios)")
             menu.add_row("[21]", "Hashcat (Quebra Hashes)")
             menu.add_row("[22]", "🕵️  Modo Anonimo (ON/OFF)")
+            menu.add_row("[23]", "FFUF Fuzzing Rapido")
             menu.add_row("[0]", "Voltar ao Menu Principal")
             menu_panel = Panel(menu, border_style=GOLD_DIM, padding=(1, 2),
                                title="FERRAMENTAS", title_align="center")
@@ -217,6 +218,9 @@ class Session:
                 prompt("\nPressione ENTER...", style=PROMPT_STYLE)
             elif choice == "22":
                 self.toggle_anonymous()
+            elif choice == "23":
+                self._run_ffuf_scan()
+                prompt("\nPressione ENTER...", style=PROMPT_STYLE)
 
             
             else:
@@ -803,6 +807,38 @@ class Session:
         else:
             console.print(f"\n[yellow][!] Nome incorreto. Projeto NAO foi apagado.[/yellow]\n")
             prompt("Pressione ENTER...", style=PROMPT_STYLE)
+
+    def _run_ffuf_scan(self):
+        """Executa FFUF nas URLs."""
+        from goldeneye.cli.menu import clear_and_show_header
+        from goldeneye.runners.ffuf_runner import run_ffuf_scan
+        from goldeneye.parsers.ffuf_parser import display_ffuf_results
+        from goldeneye.parsers.nmap_parser import parse_nmap_xml
+        clear_and_show_header(f"FFUF - {self.current_project_name}")
+        scan_dir = self.current_project_path / "scans" if self.current_project_path else None
+        if not scan_dir or not scan_dir.exists():
+            console.print("[red][!] Execute o Nmap primeiro.[/red]")
+            return
+        xml_files = sorted(scan_dir.glob("nmap_*.xml"), key=lambda f: f.stat().st_mtime, reverse=True)
+        if not xml_files:
+            console.print("[red][!] Nenhum scan Nmap encontrado.[/red]")
+            return
+        nmap_data = parse_nmap_xml(xml_files[0])
+        targets = []
+        for host in nmap_data.get("hosts", []):
+            ip = host.get("ip", "")
+            for p in host.get("ports", []):
+                if p["state"] != "open": continue
+                svc = p.get("service", "")
+                port = p["port"]
+                if svc in ["http", "https"] or port in ["80", "443", "8080", "8443"]:
+                    scheme = "https" if "ssl" in svc or port == "443" else "http"
+                    targets.append(f"{scheme}://{ip}:{port}")
+        if not targets:
+            targets.append(f"http://{self.current_target}")
+        console.print(f"[cyan]Alvos: {len(targets)} URLs[/cyan]\n")
+        results = run_ffuf_scan(targets, scan_dir)
+        display_ffuf_results(results)
 
     def _check_false_positives(self):
         """Verifica falsos positivos cruzando resultados."""
