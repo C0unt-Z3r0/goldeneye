@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/IA-Mistral%207B-purple?style=for-the-badge" alt="IA">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/pip%20install-goldeneye--security-blue?style=for-the-badge&logo=pypi" alt="PyPI">
 </p>
 
 <p align="center">
