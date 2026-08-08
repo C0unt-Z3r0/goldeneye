@@ -72,7 +72,6 @@ def show_easter_egg(command: str):
         console.print('\n🍸 [bold gold1]"Shaken, not stirred."[/bold gold1]')
         console.print("    — [italic]James Bond, 007[/italic]")
         console.print("[green][+] Modo agente ativado. Tocando tema 007... 🎵[/green]\n")
-        # Tocar o tema
         try:
             from goldeneye.cli.sound import play_theme
             play_theme()
