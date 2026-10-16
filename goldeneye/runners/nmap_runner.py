@@ -46,8 +46,10 @@ def run_nmap(
     cmd = ["nmap", *scan_profiles[scan_type]]
     if os.environ.get("GOLDENEYE_ANON"):
         console.print("[yellow][!] GOLDENEYE_ANON não torna o tráfego anônimo; ele não oculta a origem do scan.[/yellow]")
-    if ports:
-        if not re.fullmatch(r"[0-9,\-]+", ports):
+    if ports == "top100":
+        cmd.extend(["--top-ports", "100"])
+    elif ports:
+        if not re.fullmatch(r"[0-9,\\-]+", ports):
             console.print("[red][!] Formato de portas inválido.[/red]")
             return None
         cmd.extend(["-p", ports])
