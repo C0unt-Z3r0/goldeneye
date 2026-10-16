@@ -10,6 +10,7 @@ from typing import List, Dict, Optional
 from rich.console import Console
 
 console = Console()
+DEFAULT_TIMEOUT_SECONDS = 3600
 
 DEFAULT_USERS = ["admin", "root", "administrator", "user", "test"]
 ROCKYOU = os.path.expanduser("~/goldeneye/assets/rockyou.txt")
@@ -100,44 +101,53 @@ def run_hydra(
     
     results = []
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        for line in process.stdout:
+        output_file.unlink(missing_ok=True)
+        process = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            check=False,
+        )
+        if process.returncode != 0:
+            console.print(f"[yellow][!] Hydra terminou com código {process.returncode}; valide o resultado antes de concluir.[/yellow]")
+        lines = process.stdout.splitlines()
+        for line in lines:
             line = line.strip()
             if line and "login:" in line.lower() and "password:" in line.lower():
-                # Verificar se NÃO é falso positivo
                 if fail_string and fail_string.lower() in line.lower():
                     continue
-                console.print(f"[red][!] SENHA ENCONTRADA: {line}[/red]")
                 results.append({"target": target, "port": port, "service": service, "output": line, "found": True})
-        process.wait()
-        
+
         if output_file.exists() and output_file.stat().st_size > 0:
-            with open(output_file) as f:
-                for line in f:
+            with output_file.open(encoding="utf-8", errors="replace") as stream:
+                for line in stream:
                     if "login:" in line.lower() and "password:" in line.lower():
                         if fail_string and fail_string.lower() in line.lower():
                             continue
                         results.append({"target": target, "port": port, "service": service, "output": line.strip(), "found": True})
-        
+
+        unique = []
+        seen = set()
+        for result in results:
+            if result["output"] not in seen:
+                seen.add(result["output"])
+                unique.append(result)
+        results = unique
         if results:
-            # Deduplicar
-            seen = set()
-            unique = []
-            for r in results:
-                key = r["output"]
-                if key not in seen:
-                    seen.add(key)
-                    unique.append(r)
-            results = unique
-            console.print(f"[red][!] {len(results)} credenciais validas encontradas![/red]")
+            console.print(f"[red][!] {len(results)} resultado(s) de credenciais reportado(s); confirme manualmente antes de classificá-los como válidos.[/red]")
+        elif process.returncode == 0:
+            console.print("[green][+] Hydra terminou sem reportar credenciais.[/green]")
         else:
-            console.print(f"[green][+] Nenhuma credencial encontrada.[/green]")
-            
+            console.print("[yellow][!] Hydra não confirmou resultados; execução inconclusiva.[/yellow]")
     except FileNotFoundError:
-        console.print("[red][!] Hydra nao encontrado.[/red]")
-    except Exception as e:
-        console.print(f"[red][!] Erro: {e}[/red]")
-    
+        console.print("[red][!] Hydra não encontrado.[/red]")
+    except subprocess.TimeoutExpired:
+        console.print(f"[red][!] Hydra excedeu {DEFAULT_TIMEOUT_SECONDS}s; execução inconclusiva.[/red]")
+    except OSError as exc:
+        console.print(f"[red][!] Erro de I/O no Hydra: {exc}[/red]")
+
     return results
 
 
