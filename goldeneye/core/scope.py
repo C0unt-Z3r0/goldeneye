@@ -11,6 +11,10 @@ def normalize_host(value: str) -> str:
         raise ValueError("Alvo vazio ou contendo caracteres de controle.")
 
     try:
+        return str(ipaddress.ip_address(raw))
+    except ValueError:
+        pass
+    try:
         return str(ipaddress.ip_network(raw, strict=False))
     except ValueError:
         pass
