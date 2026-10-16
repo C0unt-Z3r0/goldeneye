@@ -14,6 +14,7 @@ from goldeneye.discovery.whois_lookup import whois_lookup
 from goldeneye.discovery.subdomains import discover_subdomains
 from goldeneye.discovery.probe import probe_hosts
 from goldeneye.discovery.fingerprint import fingerprint_urls
+from goldeneye.core.scope import target_in_scope
 
 console = Console()
 
@@ -66,10 +67,17 @@ def run_discovery(target: str, project_name: str = None) -> Dict:
             for sub in result["subdomains"]:
                 console.print(f"    [grey]{sub}[/grey]")
 
-        # Step 4: Probe
-        console.print(f"\n[gold1][4/5] Verificando hosts vivos...[/gold1]")
-        result["hosts_alive"] = probe_hosts(result["subdomains"])
-        console.print(f"  [green]{len(result['hosts_alive'])} hosts respondendo[/green]")
+        # Step 4: Probe apenas ativos explicitamente dentro do escopo do projeto.
+        console.print(f"\n[gold1][4/5] Verificando hosts vivos dentro do escopo...[/gold1]")
+        scoped_hosts = [host for host in result["subdomains"] if target_in_scope(target, host)]
+        excluded_count = len(result["subdomains"]) - len(scoped_hosts)
+        if excluded_count:
+            console.print(
+                f"  [yellow]{excluded_count} subdomínio(s) descoberto(s) ficaram fora da sondagem ativa; "
+                "crie um escopo autorizado explícito para avaliá-los.[/yellow]"
+            )
+        result["hosts_alive"] = probe_hosts(scoped_hosts)
+        console.print(f"  [green]{len(result['hosts_alive'])} hosts dentro do escopo respondendo[/green]")
 
         # Step 5: Fingerprint
         if result["hosts_alive"]:
