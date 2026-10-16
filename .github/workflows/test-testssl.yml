@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install build and test dependencies
-        run: python -m pip install --upgrade pip build pytest rich jinja2 weasyprint jinja2 weasyprint
+        run: python -m pip install --upgrade pip build pytest rich jinja2 weasyprint dnspython python-whois httpx jinja2 weasyprint
       - name: Audit any committed distributions
         run: |
           if compgen -G "dist/*.whl" > /dev/null && compgen -G "dist/*.tar.gz" > /dev/null; then
