@@ -13,6 +13,12 @@ SENSITIVE_MARKERS = (
     b"example.com",
     b"192.0.2.10",
 )
+# Allow only known synthetic markers in specific test fixtures.
+BENIGN_TEST_MARKERS = {
+    "tests/test_ai_analyzer.py": {b"192.0.2.10"},
+    "tests/test_scope.py": {b"example.com", b"192.0.2.10"},
+    "tests/test_testssl_parser.py": {b"192.0.2.10"},
+}
 REQUIRED_MODULES = (
     "goldeneye/parsers/testssl_parser.py",
     "goldeneye/runners/testssl_runner.py",
@@ -42,6 +48,13 @@ def read_archive(path: Path) -> dict[str, bytes]:
 def module_match(archive_name: str, module_path: str) -> bool:
     return archive_name == module_path or archive_name.endswith("/" + module_path)
 
+def is_allowed_test_marker(name: str, marker: bytes) -> bool:
+    """Ignore only explicitly approved marker/file combinations."""
+    return any(
+        name.endswith("/" + test_path)
+        and marker in allowed_markers
+        for test_path, allowed_markers in BENIGN_TEST_MARKERS.items()
+    )
 
 def audit(path: Path, strict: bool) -> bool:
     if not path.is_file():
@@ -63,7 +76,9 @@ def audit(path: Path, strict: bool) -> bool:
         for name, data in files.items()
         for marker in SENSITIVE_MARKERS
         if marker in data
+        and not is_allowed_test_marker(name, marker)
     ]
+
     if content_hits:
         for name, marker in content_hits:
             print(f"[ALERTA] Marcador potencialmente sensível {marker!r} em {name}")
