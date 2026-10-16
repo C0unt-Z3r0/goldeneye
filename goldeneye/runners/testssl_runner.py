@@ -50,6 +50,13 @@ def run_testssl(
 
 
 def _run_and_parse(target: str, port: int, json_file: Path) -> List[Dict]:
+    # Evita interpretar um JSON antigo como se fosse desta execução.
+    try:
+        json_file.unlink(missing_ok=True)
+    except OSError as exc:
+        console.print(f"[red][!] Não foi possível preparar o arquivo JSON de saída: {exc}[/red]")
+        return []
+
     cmd = [
         "testssl",
         "--jsonfile-pretty",
