@@ -10,6 +10,7 @@ from typing import List, Dict, Optional
 from rich.console import Console
 
 console = Console()
+DEFAULT_TIMEOUT_SECONDS = 1800
 
 
 def run_sqlmap(
@@ -40,24 +41,39 @@ def run_sqlmap(
     console.print(f"[grey]    Risk={risk} Level={level} Crawl={crawl_depth}[/grey]")
     
     try:
-        with open(output_path, "w") as f:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            for line in process.stdout:
-                f.write(line)
-                if "available databases" in line.lower():
-                    console.print(f"[red][!] Bancos de dados encontrados![/red]")
-                elif "is vulnerable" in line.lower():
-                    console.print(f"[red][!] {line.strip()}[/red]")
-            process.wait()
-        
+        output_path.unlink(missing_ok=True)
+        with open(output_path, "w", encoding="utf-8") as stream:
+            try:
+                process = subprocess.run(
+                    cmd,
+                    stdout=stream,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    timeout=DEFAULT_TIMEOUT_SECONDS,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired:
+                console.print(f"[red][!] SQLMap excedeu {DEFAULT_TIMEOUT_SECONDS}s; resultado inconclusivo.[/red]")
+                return None
+        if process.returncode != 0:
+            console.print(f"[yellow][!] SQLMap terminou com código {process.returncode}; revise o log antes de interpretar resultados.[/yellow]")
+            return None
         if output_path.exists() and output_path.stat().st_size > 0:
-            console.print(f"[green][+] SQLMap concluido.[/green]")
+            with output_path.open(encoding="utf-8", errors="replace") as stream:
+                for line in stream:
+                    if "available databases" in line.lower():
+                        console.print("[red][!] SQLMap reportou bancos de dados disponíveis.[/red]")
+                    elif "is vulnerable" in line.lower():
+                        console.print(f"[red][!] {line.strip()[:300]}[/red]")
+            console.print("[green][+] SQLMap concluído.[/green]")
             return output_path
     except FileNotFoundError:
-        console.print("[red][!] SQLMap nao encontrado.[/red]")
-    except Exception as e:
-        console.print(f"[red][!] Erro: {e}[/red]")
-    
+        console.print("[red][!] SQLMap não encontrado.[/red]")
+    except OSError as exc:
+        console.print(f"[red][!] Erro de I/O no SQLMap: {exc}[/red]")
+    except Exception as exc:
+        console.print(f"[red][!] Erro ao executar SQLMap: {exc}[/red]")
+
     return None
 
 
