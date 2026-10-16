@@ -32,3 +32,6 @@ hydra.restore
 
 # Pacotes de distribuição são gerados no build/CI, não versionados
 /dist/
+
+# Build metadata is generated locally and in CI
+*.egg-info/
