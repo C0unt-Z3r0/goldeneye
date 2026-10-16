@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 import re
+from goldeneye.core.scope import normalize_host, target_in_scope
 
 from rich.console import Console
 from rich.panel import Panel
@@ -41,12 +42,10 @@ PROJECT_COMMANDS = WordCompleter(
 
 
 def sanitize_target(target: str) -> str:
-    target = target.strip().lower()
-    target = re.sub(r'^https?://', '', target)
-    target = re.sub(r'^www\.', '', target)
-    target = target.split('/')[0]
-    target = target.split(':')[0]
-    return target
+    """Normaliza o alvo sem truncar enderecos IPv6 ou redes CIDR."""
+    value = str(target or "").strip()
+    value = re.sub(r"^www\.", "", value, flags=re.IGNORECASE)
+    return normalize_host(value)
 
 
 class Session:
@@ -55,6 +54,8 @@ class Session:
         self.current_project_name: Optional[str] = None
         self.current_project_path: Optional[Path] = None
         self.current_target: Optional[str] = None
+        self.current_scope: Optional[str] = None
+        self.scope_confirmed = False
         self.started_at = datetime.now()
 
     def display_status(self):
@@ -78,7 +79,9 @@ class Session:
                 self.current_project_id = project.id
                 self.current_project_name = project.name
                 self.current_project_path = Path(project.project_path) if project.project_path else None
+                self.current_scope = project.target
                 self.current_target = sanitize_target(project.target)
+                self.scope_confirmed = False
                 self._offer_discovery()
 
     def resume_project(self):
@@ -91,7 +94,11 @@ class Session:
                 self.current_project_id = project.id
                 self.current_project_name = project.name
                 self.current_project_path = Path(project.project_path) if project.project_path else None
+                self.current_scope = project.target
                 self.current_target = sanitize_target(project.target)
+                self.scope_confirmed = False
+                if not self._ensure_authorized_scope():
+                    return
                 pm.update_status(project_id, ProjectStatus.IN_PROGRESS)
                 console.print(f"\n[green][+] Projeto '{project.name}' carregado![/green]")
                 console.print(f"[cyan][*] Cliente: {project.client}[/cyan]")
@@ -99,8 +106,31 @@ class Session:
                 prompt("Pressione ENTER para continuar...", style=PROMPT_STYLE)
                 self._project_menu()
 
+    def _ensure_authorized_scope(self) -> bool:
+        """Exige confirmação explícita do escopo antes de abrir as ferramentas."""
+        if self.scope_confirmed:
+            return True
+        if not self.current_scope or not self.current_target:
+            console.print("[red][!] Projeto sem alvo definido; execução bloqueada.[/red]")
+            return False
+
+        console.print("\n[yellow]CONFIRMAÇÃO DE ESCOPO[/yellow]")
+        console.print(f"Alvo/escopo declarado no projeto: [bold]{self.current_scope}[/bold]")
+        console.print(
+            "Execute ferramentas somente sobre ativos cobertos pela autorização. "
+            "Hosts descobertos, subdomínios e URLs manuais não entram automaticamente no escopo."
+        )
+        answer = prompt("Confirmo que tenho autorização para este escopo? [s/N]: ", style=PROMPT_STYLE).strip().lower()
+        if answer not in {"s", "sim", "y", "yes"}:
+            console.print("[yellow][*] Ferramentas não iniciadas; confirme o escopo para continuar.[/yellow]")
+            return False
+        self.scope_confirmed = True
+        return True
+
     def _offer_discovery(self):
         from goldeneye.cli.menu import clear_and_show_header
+        if not self._ensure_authorized_scope():
+            return
         clear_and_show_header(f"PROJETO: {self.current_project_name}")
         console.print(f"[cyan]Alvo: {self.current_target}[/cyan]\n")
         console.print("[gold1]Deseja iniciar a descoberta automatica?[/gold1]")
