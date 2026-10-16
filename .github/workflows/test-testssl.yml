@@ -35,4 +35,4 @@ jobs:
       - name: Strictly audit rebuilt distributions
         run: python scripts/audit_distribution.py --strict dist/*.whl dist/*.tar.gz
       - name: Run focused parser and runner tests
-        run: python -m pytest -q tests/test_testssl_parser.py tests/test_testssl_runner.py
+        run: python -m pytest -q tests/test_ai_analyzer.py tests/test_testssl_parser.py tests/test_testssl_runner.py
