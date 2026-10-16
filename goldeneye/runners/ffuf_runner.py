@@ -9,6 +9,7 @@ from typing import List, Dict, Optional
 from rich.console import Console
 
 console = Console()
+DEFAULT_TIMEOUT_SECONDS = 1800
 WORDLIST = "/usr/share/wordlists/dirb/common.txt"
 
 
@@ -45,12 +46,14 @@ def run_ffuf(
     
     results = []
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        for line in process.stdout:
+        output_file.unlink(missing_ok=True)
+        process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=DEFAULT_TIMEOUT_SECONDS, check=False)
+        for line in process.stdout.splitlines():
             line = line.strip()
             if line:
                 console.print(f"[green]  {line}[/green]")
-        process.wait()
+        if process.returncode != 0:
+            console.print(f"[yellow][!] FFUF terminou com código {process.returncode}.[/yellow]")
         
         if output_file.exists() and output_file.stat().st_size > 0:
             with open(output_file) as f:
@@ -69,6 +72,8 @@ def run_ffuf(
         else:
             console.print(f"[grey][*] Nenhum resultado.[/grey]")
             
+    except subprocess.TimeoutExpired:
+        console.print(f"[red][!] FFUF excedeu {DEFAULT_TIMEOUT_SECONDS}s; resultado inconclusivo.[/red]")
     except FileNotFoundError:
         console.print("[red][!] FFUF nao encontrado. Instale: sudo apt install ffuf[/red]")
     except Exception as e:
