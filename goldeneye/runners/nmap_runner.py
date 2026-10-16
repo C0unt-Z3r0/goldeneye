@@ -1,17 +1,19 @@
 """
 goldeneye/runners/nmap_runner.py
-Executor do Nmap com barra de progresso.
+Executor do Nmap com timeout e validacao do resultado.
 """
 
-import subprocess
-import re
 import os
+import re
+import subprocess
 from pathlib import Path
 from typing import Optional
+
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 console = Console()
+DEFAULT_TIMEOUT_SECONDS = 1800
 
 
 def run_nmap(
@@ -19,104 +21,74 @@ def run_nmap(
     output_dir: Path,
     scan_type: str = "quick",
     ports: Optional[str] = None,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> Optional[Path]:
-    """
-    Executa Nmap no alvo e salva o XML.
-    
-    Args:
-        target: IP ou range (ex: 192.168.1.0/24)
-        output_dir: diretorio para salvar o XML
-        scan_type: "quick" (top 1000), "full" (1-65535), "stealth" (SYN scan)
-        ports: ports personalizadas (ex: "22,80,443,8080")
-    
-    Returns:
-        Path do arquivo XML gerado, ou None se falhar
-    """
-    
+    """Executa Nmap com timeout; so aceita XML novo e retorno bem-sucedido."""
+    if not target or target.startswith("-") or any(ch in target for ch in "\r\n\0"):
+        console.print("[red][!] Alvo inválido; execução cancelada.[/red]")
+        return None
+    if timeout <= 0:
+        raise ValueError("timeout deve ser maior que zero")
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    slug = target.replace("/", "_").replace(".", "_")
+    slug = re.sub(r"[^A-Za-z0-9_.-]+", "_", target).strip("._") or "target"
     xml_path = output_dir / f"nmap_{scan_type}_{slug}.xml"
-    
-    cmd = ["nmap"]
-    
-    # Tipo de scan
-    if scan_type == "quick":
-        cmd.extend(["-sV", "-sC", "-O", "--top-ports", "1000"])
-    elif scan_type == "full":
-        cmd.extend(["-sV", "-sC", "-O", "-p", "1-65535"])
-    elif scan_type == "stealth":
-        import os
+
+    scan_profiles = {
+        "quick": ["-sV", "-sC", "-O", "--top-ports", "1000"],
+        "full": ["-sV", "-sC", "-O", "-p", "1-65535"],
+        "stealth": ["-sS", "-sV", "--top-ports", "1000", "-T2"],
+    }
+    if scan_type not in scan_profiles:
+        console.print(f"[red][!] Tipo de scan inválido: {scan_type}[/red]")
+        return None
+
+    cmd = ["nmap", *scan_profiles[scan_type]]
     if os.environ.get("GOLDENEYE_ANON"):
-        cmd.extend(["-sS", "-sV", "--top-ports", "1000", "--randomize-hosts", "-T2"])
-    else:
-        cmd.extend(["-sS", "-sV", "-O", "--top-ports", "1000"])
-    
-    # Portas personalizadas
+        console.print("[yellow][!] GOLDENEYE_ANON não torna o tráfego anônimo; ele não oculta a origem do scan.[/yellow]")
     if ports:
+        if not re.fullmatch(r"[0-9,\-]+", ports):
+            console.print("[red][!] Formato de portas inválido.[/red]")
+            return None
         cmd.extend(["-p", ports])
-    
-    # Output XML
-    cmd.extend(["-oX", str(xml_path)])
-    
-    # Alvo
-    cmd.append(target)
-    
-    console.print(f"\n[gold1][*] Executando Nmap ({scan_type}) em {target}...[/gold1]")
-    console.print(f"[grey]    Comando: {' '.join(cmd)}[/grey]\n")
-    
+    cmd.extend(["-oX", str(xml_path), target])
+
     try:
-        # Executar com barra de progresso simulada
+        xml_path.unlink(missing_ok=True)
+    except OSError as exc:
+        console.print(f"[red][!] Não foi possível preparar o XML: {exc}[/red]")
+        return None
+
+    console.print(f"\n[gold1][*] Executando Nmap ({scan_type}) em {target}...[/gold1]")
+    try:
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeElapsedColumn(),
             console=console,
         ) as progress:
-            
-            task = progress.add_task(f"[cyan]Scanning {target}...", total=100)
-            
-            # Iniciar o processo
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
+            progress.add_task(f"[cyan]Scan em andamento (limite {timeout}s)...", total=None)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=timeout, check=False
             )
-            
-            # Atualizar barra enquanto o processo roda
-            # O Nmap imprime porcentagens no stdout
-            while process.poll() is None:
-                line = process.stdout.readline()
-                if not line:
-                    break
-                
-                # Tentar extrair porcentagem do Nmap
-                match = re.search(r'About (\d+\.?\d*)% done', line)
-                if match:
-                    pct = float(match.group(1))
-                    progress.update(task, completed=pct)
-                elif "Starting Nmap" in line:
-                    progress.update(task, description=f"[cyan]Iniciando scan...")
-                elif "Nmap done" in line:
-                    progress.update(task, completed=100, description="[green]Scan concluido!")
-            
-            # Garantir 100%
-            progress.update(task, completed=100, description="[green]Scan concluido!")
-        
-        # Verificar resultado
-        if xml_path.exists() and xml_path.stat().st_size > 0:
-            console.print(f"\n[green][+] Nmap concluido![/green]")
-            console.print(f"[grey]    XML salvo em: {xml_path}[/grey]")
-            return xml_path
-        else:
-            console.print(f"\n[red][!] Nmap nao gerou output.[/red]")
-            return None
-            
     except FileNotFoundError:
-        console.print("[red][!] Nmap nao encontrado. Instale: sudo apt install nmap[/red]")
+        console.print("[red][!] Nmap não encontrado. Instale o Nmap antes de executar.[/red]")
         return None
-    except Exception as e:
-        console.print(f"[red][!] Erro ao executar Nmap: {e}[/red]")
+    except subprocess.TimeoutExpired:
+        console.print(f"[red][!] Nmap excedeu o timeout de {timeout}s; resultado inconclusivo.[/red]")
+        xml_path.unlink(missing_ok=True)
         return None
+    except OSError as exc:
+        console.print(f"[red][!] Não foi possível executar Nmap: {exc}[/red]")
+        return None
+
+    if result.returncode != 0:
+        console.print(f"[red][!] Nmap terminou com código {result.returncode}; resultado não será aceito.[/red]")
+        return None
+    if not xml_path.is_file() or xml_path.stat().st_size == 0:
+        console.print("[red][!] Nmap não produziu XML válido; resultado inconclusivo.[/red]")
+        return None
+
+    console.print("[green][+] Nmap concluído.[/green]")
+    console.print(f"[grey]XML salvo em: {xml_path}[/grey]")
+    return xml_path
