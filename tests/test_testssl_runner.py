@@ -56,3 +56,18 @@ def test_runner_handles_timeout_without_claiming_safe(monkeypatch, tmp_path):
     findings = testssl_runner.run_testssl("example.invalid", 443, tmp_path)
 
     assert findings == []
+
+
+def test_runner_does_not_reuse_stale_json_from_previous_scan(monkeypatch, tmp_path):
+    stale_json = tmp_path / "testssl_example.invalid_443.json"
+    stale_json.write_text('{"scanResult": []}', encoding="utf-8")
+    monkeypatch.setattr(
+        testssl_runner.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout="", stderr=""),
+    )
+
+    findings = testssl_runner.run_testssl("example.invalid", 443, tmp_path)
+
+    assert findings == []
+    assert not stale_json.exists()
