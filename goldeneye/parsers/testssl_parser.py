@@ -78,11 +78,11 @@ def parse_testssl_json(payload: Dict[str, Any]) -> List[Dict[str, str]]:
 
 def display_testssl_results(results: List[Dict]):
     if not results:
-        console.print("\\n[green][+] Nenhum problema TLS/SSL identificado.[/green]")
+        console.print("\n[green][+] Nenhum problema TLS/SSL identificado.[/green]")
         return
 
-    console.print(f"\\n[red]═══ PROBLEMAS TLS/SSL ═══[/red]")
-    console.print(f"[cyan]Total: {len(results)} problemas[/cyan]\\n")
+    console.print(f"\n[red]═══ PROBLEMAS TLS/SSL ═══[/red]")
+    console.print(f"[cyan]Total: {len(results)} problemas[/cyan]\n")
 
     table = Table(border_style=GREY, show_header=True)
     table.add_column("Alvo")
