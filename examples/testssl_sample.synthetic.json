@@ -1,0 +1,33 @@
+{
+  "_fixture_notice": "DADOS TOTALMENTE SINTÉTICOS — exemplo ilustrativo, não é saída de uma avaliação real nem um relatório completo do testssl.sh.",
+  "Invocation": "testssl --json-pretty example.invalid:443",
+  "at": "synthetic-fixture",
+  "version": "0.0.0-fixture",
+  "openssl": "synthetic fixture; no real environment was scanned",
+  "startTime": "0",
+  "scanResult": [
+    {
+      "targetHost": "example.invalid",
+      "ip": "192.0.2.10",
+      "port": "443",
+      "rDNS": "",
+      "service": "HTTP",
+      "protocols": [
+        {
+          "id": "TLS1_2",
+          "severity": "OK",
+          "finding": "offered"
+        },
+        {
+          "id": "TLS1_3",
+          "severity": "OK",
+          "finding": "offered"
+        }
+      ],
+      "notes": [
+        "Fixture mínima para documentação e testes de parsing.",
+        "Os valores foram inventados e usam domínios/IPs reservados para exemplos."
+      ]
+    }
+  ]
+}
