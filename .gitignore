@@ -19,6 +19,8 @@ hydra.restore
 
 # Scans temporários
 *.json
+# Permitir apenas fixtures JSON sintéticas e explicitamente identificadas
+!examples/*.synthetic.json
 
 # Scripts de teste
 capturar.sh
