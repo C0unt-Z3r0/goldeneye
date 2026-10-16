@@ -26,10 +26,10 @@ class UIConfig(BaseModel):
 
 
 class AIConfig(BaseModel):
-    provider: str = "openai"
-    model: str = "gpt-4"
+    provider: str = "ollama"
+    model: str = "mistral:7b"
     temperature: float = 0.7
-    max_tokens: int = 4096
+    max_tokens: int = 2048
 
 
 class ReportsConfig(BaseModel):
