@@ -76,7 +76,7 @@ def run_gobuster(
             if line and "Status:" in line:
                 console.print(f"[green]  {line}[/green]")
                 import re
-                match = re.search(r'/(\\S+)\\s+\\(Status:\\s*(\\d+)\\)\\s*\\[Size:\\s*(\\d+)\\]', line)
+                match = re.search(r'/(\S+)\s+\(Status:\s*(\d+)\)\s*\[Size:\s*(\d+)\]', line)
                 if match:
                     results.append({
                         "path": match.group(1),
