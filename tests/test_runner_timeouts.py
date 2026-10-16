@@ -33,3 +33,24 @@ def test_hydra_timeout_is_inconclusive(monkeypatch, tmp_path):
         password="synthetic-secret",
     )
     assert results == []
+
+
+def test_nmap_top100_profile_uses_valid_flag(monkeypatch, tmp_path):
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    observed = {}
+
+    def fake_run(cmd, **kwargs):
+        observed["cmd"] = cmd
+        xml_path = Path(cmd[cmd.index("-oX") + 1])
+        xml_path.write_text("<nmaprun />", encoding="utf-8")
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(nmap_runner.subprocess, "run", fake_run)
+    result = nmap_runner.run_nmap("example.invalid", tmp_path, ports="top100")
+
+    assert result is not None
+    assert "--top-ports" in observed["cmd"]
+    assert observed["cmd"][observed["cmd"].index("--top-ports") + 1] == "100"
+    assert "-p" not in observed["cmd"]
