@@ -80,13 +80,13 @@ DETALHES DO SCAN:
 {chr(10).join(hosts_summary)}
 
 INSTRUCOES ESPECIFICAS:
-- O servidor parece hospedar um ambiente Moodle (AVA) no subdominio ava.example.com
-- MariaDB 10.6.27 esta exposto na porta 3306 - isso e critico
-- OpenSSH 8.0 pode ter vulnerabilidades conhecidas
-- ProFTPD e SVN expostos sao mas praticas
-- Apache httpd precisa de verificacao de configuracao
+- Baseie a analise exclusivamente nos hosts, portas, produtos e versoes presentes nos dados do scan.
+- Nao presuma tecnologias, servicos expostos, versoes, vulnerabilidades ou impacto sem evidencia.
+- Trate versoes ausentes ou identificacao incerta como desconhecidas.
+- Cite CVEs e atribua CVSS somente quando houver correspondencia verificavel; caso contrario, indique que a validacao ainda e necessaria.
+- Se nenhum servico relevante for encontrado, informe essa limitacao em vez de inventar descobertas.
 
-Analise cada servico individualmente, atribua CVSS, e priorize as recomendacoes."""
+Analise cada servico observado individualmente, explique as incertezas e priorize recomendacoes proporcionais as evidencias."""
 
     try:
         import ollama
