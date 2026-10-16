@@ -44,7 +44,6 @@ PROJECT_COMMANDS = WordCompleter(
 def sanitize_target(target: str) -> str:
     """Normaliza o alvo sem truncar enderecos IPv6 ou redes CIDR."""
     value = str(target or "").strip()
-    value = re.sub(r"^www\.", "", value, flags=re.IGNORECASE)
     return normalize_host(value)
 
 
