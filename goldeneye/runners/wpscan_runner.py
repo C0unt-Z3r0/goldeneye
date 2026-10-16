@@ -9,6 +9,7 @@ from typing import List, Dict
 from rich.console import Console
 
 console = Console()
+DEFAULT_TIMEOUT_SECONDS = 1800
 
 
 def run_wpscan(target_url: str, output_dir: Path) -> List[Dict]:
@@ -31,9 +32,12 @@ def run_wpscan(target_url: str, output_dir: Path) -> List[Dict]:
     
     results = []
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        
-        for line in process.stdout:
+        output_file.unlink(missing_ok=True)
+        process = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, timeout=DEFAULT_TIMEOUT_SECONDS, check=False,
+        )
+        for line in process.stdout.splitlines():
             line = line.strip()
             if line:
                 if "[+]" in line or "[!]" in line:
@@ -41,14 +45,16 @@ def run_wpscan(target_url: str, output_dir: Path) -> List[Dict]:
                     results.append({"finding": line, "url": target_url})
                 elif "[i]" in line:
                     console.print(f"[grey]  {line}[/grey]")
-        
-        process.wait()
-        
+        if process.returncode != 0:
+            console.print(f"[yellow][!] WPScan terminou com código {process.returncode}.[/yellow]")
+
         if results:
             console.print(f"[green][+] {len(results)} descobertas![/green]")
         else:
             console.print(f"[grey][*] Nenhuma descoberta critica.[/grey]")
             
+    except subprocess.TimeoutExpired:
+        console.print(f"[red][!] WPScan excedeu {DEFAULT_TIMEOUT_SECONDS}s; resultado inconclusivo.[/red]")
     except FileNotFoundError:
         console.print("[red][!] WPScan nao encontrado. Instale: sudo apt install wpscan[/red]")
     except Exception as e:
