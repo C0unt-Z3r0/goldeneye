@@ -1,0 +1,24 @@
+name: Test testssl parser and runner
+
+on:
+  push:
+    branches:
+      - fix/repository-data-sanitization
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-testssl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install focused test dependencies
+        run: python -m pip install --upgrade pip pytest rich
+      - name: Run testssl parser and runner tests
+        run: python -m pytest -q tests/test_testssl_parser.py tests/test_testssl_runner.py
