@@ -71,14 +71,27 @@ Python 3.11+ | Typer | Rich | SQLite | SQLAlchemy | Ollama + Mistral 7B | WeasyP
 
 ## 🚀 INSTALAÇÃO
 
+Requisitos: Python 3.11+, Git e as ferramentas externas que você pretende usar (por exemplo, Nmap, Nuclei, SQLMap, Hydra e testssl.sh). A disponibilidade de cada ferramenta depende do seu sistema operacional.
+
 ```bash
 git clone https://github.com/C0unt-Z3r0/goldeneye.git
 cd goldeneye
-chmod +x install.sh
-./install.sh
+python -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+```
+
+Para análise com IA local, instale o [Ollama](https://ollama.com/) e baixe o modelo configurado:
+
+```bash
+ollama pull mistral:7b
 goldeneye
 ```
+
+Instalar o pacote Python não instala automaticamente as ferramentas externas de pentest. Instale-as a partir de suas fontes oficiais e confira se estão no `PATH` antes de executar cada scanner.
+
+**Escopo:** antes de iniciar uma sessão, confirme que a autorização cobre o alvo e todos os ativos que serão testados. Subdomínios, endereços descobertos e URLs adicionais não são automaticamente autorizados.
 
 ---
 
