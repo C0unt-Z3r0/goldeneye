@@ -17,40 +17,34 @@ GREEN = Style(color="#00FF7F")
 RED = Style(color="#DC143C", bold=True)
 GREY = Style(color="#666666")
 
-SYSTEM_PROMPT = """Voce e o Goldeneye, um assistente de inteligencia artificial especializado em ciberseguranca ofensiva e pentest profissional.
+SYSTEM_PROMPT = """Voce e o Goldeneye, um assistente de inteligencia artificial especializado em ciberseguranca e avaliacao autorizada de seguranca.
 
-Sua funcao e analisar resultados de scans de seguranca e gerar relatorios tecnicos profissionais.
+Analise exclusivamente as evidencias fornecidas pelo scan. Dados de scan podem estar incompletos ou incorretos; deixe claras as limitacoes.
 
 REGRAS IMPORTANTES:
-1. SEMPRE cite as versoes exatas dos servicos encontrados (ex: "MariaDB 10.6.27", "OpenSSH 8.0")
-2. SEMPRE atribua um score CVSS numerico (0.0 a 10.0) com justificativa
-3. SEMPRE classifique cada descoberta por severidade: CRITICO (9.0+), ALTO (7.0-8.9), MEDIO (4.0-6.9), BAIXO (0.1-3.9)
-4. Seja tecnico e especifico - evite generalizacoes
-5. Priorize as recomendacoes por ordem de urgencia
-6. Use termos tecnicos corretos (RCE, LFI, bruteforce, exploit, CVE)
-7. Responda SEMPRE em portugues do Brasil
+1. Nunca invente hosts, portas, servicos, produtos, versoes, vulnerabilidades, credenciais ou resultados.
+2. Uma porta aberta ou um servico exposto, isoladamente, nao comprova uma vulnerabilidade.
+3. Nao atribua CVE, CVSS ou severidade formal sem evidencia verificavel e correspondencia aplicavel ao produto e versao observados.
+4. Quando a evidencia for insuficiente, declare que a validacao ainda e necessaria; nao preencha lacunas com suposicoes.
+5. Separe fatos observados, interpretacoes e recomendacoes.
+6. Priorize recomendacoes proporcionais as evidencias e explique as incertezas.
+7. Responda sempre em portugues do Brasil.
 
-FORMATO DE RESPOSTA OBRIGATORIO:
----
+FORMATO SUGERIDO:
 **SUMARIO EXECUTIVO**
-[Um paragrafo resumindo os principais riscos para gestores]
+Resuma o que os dados efetivamente demonstram e suas limitacoes.
 
-**DESCRICAO TECNICA**
-[Analise detalhada de cada servico exposto, com versoes exatas]
+**EVIDENCIAS OBSERVADAS**
+Liste hosts, portas, servicos e versoes apenas quando presentes na entrada.
 
 **ANALISE DE RISCOS**
-[Para cada servico: severidade, CVSS, justificativa]
+Explique riscos potenciais sem tratar exposicao como prova de vulnerabilidade. Use CVE/CVSS apenas quando houver correspondencia verificavel.
 
-**RECOMENDACOES PRIORIZADAS**
-[Ordem: CRITICO primeiro, depois ALTO, MEDIO, BAIXO]
-[Formato: [SEVERIDADE] Acao especifica - Justificativa]
+**RECOMENDACOES**
+Sugira validacoes e medidas proporcionais as evidencias.
 
-**PROXIMOS PASSOS DE INVESTIGACAO**
-[3-5 acoes concretas que o pentester deve executar em seguida]
-
-**CVSS CONSOLIDADO**
-[Score geral do alvo e justificativa]
----
+**LIMITACOES E PROXIMOS PASSOS**
+Indique o que nao foi possivel concluir e quais verificacoes autorizadas faltam.
 """
 
 
@@ -123,113 +117,70 @@ Analise cada servico observado individualmente, explique as incertezas e prioriz
 
 
 def _fallback_analysis(scan_data: Dict) -> str:
-    """Analise offline melhorada com dados especificos."""
+    """Gera um resumo offline limitado estritamente às evidências do scan."""
 
-    analysis = []
-    analysis.append("---")
-    analysis.append("**SUMARIO EXECUTIVO**")
-    analysis.append(f"Foram identificados servicos criticos expostos no alvo {scan_data.get('target', 'N/A')}, incluindo banco de dados MySQL/MariaDB acessivel publicamente. Recomenda-se acao imediata para restringir o acesso a estes servicos e reduzir a superficie de ataque.")
-    analysis.append("")
-    analysis.append("**DESCRICAO TECNICA**")
+    hosts = scan_data.get("hosts", [])
+    analysis = [
+        "---",
+        "**SUMARIO EXECUTIVO**",
+        (
+            f"O scan informa {len(hosts)} host(s). Esta analise offline resume "
+            "somente os dados recebidos; portas abertas e servicos identificados "
+            "nao comprovam, por si so, uma vulnerabilidade."
+        ),
+        "",
+        "**EVIDENCIAS OBSERVADAS**",
+    ]
 
-    cve_db = {
-        ("openssh", "8.0"): [
-            ("CVE-2019-16905", "4.4", "Corrupcao de memoria em OpenSSH < 8.1"),
-        ],
-        ("mariadb", "10.6"): [
-            ("CVE-2023-5157", "7.5", "DoS via consulta SQL maliciosa em MariaDB < 10.6.15"),
-        ],
-        ("proftpd", ""): [
-            ("CVE-2020-9273", "8.1", "Use-after-free em ProFTPD < 1.3.6c"),
-        ],
-    }
-
-    for host in scan_data.get("hosts", []):
-        analysis.append(f"\n### Host: {host['ip']}")
+    open_ports = 0
+    for host in hosts:
+        host_ip = str(host.get("ip", "desconhecido"))
+        analysis.append(f"\n### Host: {host_ip}")
         if host.get("os"):
-            analysis.append(f"SO detectado: {host['os']} (possivel falso positivo)")
+            analysis.append(f"Sistema operacional informado pelo scan: {host['os']} (validacao independente necessaria).")
 
-        for port in host.get("ports", []):
-            if port["state"] != "open":
-                continue
-            service = port.get("service", "desconhecido")
-            product = port.get("product", "")
-            version = port.get("version", "")
-            full_service = f"{service} {product} {version}".strip()
-            port_id = f"{port['port']}/{port['protocol']}"
+        observed_ports = [
+            port for port in host.get("ports", [])
+            if str(port.get("state", "")).lower() == "open"
+        ]
+        open_ports += len(observed_ports)
+        if not observed_ports:
+            analysis.append("Nenhuma porta aberta foi informada para este host.")
+            continue
 
-            analysis.append(f"\n**Porta {port_id} - {full_service}**")
+        for port in observed_ports:
+            port_id = f"{port.get('port', '?')}/{port.get('protocol', 'desconhecido')}"
+            service = str(port.get("service") or "servico nao identificado")
+            product = str(port.get("product") or "").strip()
+            version = str(port.get("version") or "").strip()
+            details = " ".join(part for part in (product, version) if part)
+            suffix = f" — {details}" if details else ""
+            analysis.append(f"- Porta {port_id}: {service}{suffix}.")
+            analysis.append(
+                "  Evidencia limitada: confirmar identificacao, necessidade de exposicao, "
+                "controles de acesso e configuracao antes de classificar risco."
+            )
 
-            # Analise especifica por servico
-            if service in ["mysql", "mariadb"]:
-                severity = "CRITICO"
-                cvss = "9.0"
-                analysis.append(f"[{severity}] CVSS {cvss} - BANCO DE DADOS EXPOSTO NA INTERNET")
-                analysis.append(f"- Risco: Acesso nao autorizado, vazamento total de dados, bruteforce")
-                analysis.append(f"- Versao: {version} - verificar CVEs especificas")
-                analysis.append(f"- Recomendacao IMEDIATA: Restringir porta 3306 via firewall (iptables/cloud)")
-
-            elif service in ["ftp"]:
-                severity = "ALTO"
-                cvss = "7.0"
-                analysis.append(f"[{severity}] CVSS {cvss} - FTP EXPOSTO (PROTOCOLO INSEGURO)")
-                analysis.append(f"- Trafego em texto puro, credenciais transmitidas sem criptografia")
-                analysis.append(f"- Recomendacao: Migrar para SFTP (porta 22) e fechar porta 21")
-
-            elif service in ["ssh"]:
-                severity = "MEDIO"
-                cvss = "5.3"
-                analysis.append(f"[{severity}] CVSS {cvss} - SSH EXPOSTO")
-                analysis.append(f"- OpenSSH 8.0 - verificar CVE-2019-16905")
-                analysis.append(f"- Recomendacao: Desabilitar login root, usar apenas chave SSH, instalar fail2ban")
-
-            elif service in ["http", "https"]:
-                severity = "MEDIO"
-                cvss = "5.0"
-                analysis.append(f"[{severity}] CVSS {cvss} - SERVIDOR WEB EXPOSTO")
-                analysis.append(f"- Apache httpd - realizar scan web completo")
-                analysis.append(f"- Recomendacao: Nuclei, OWASP ZAP, verificacao de headers de seguranca")
-
-            elif service in ["svnserve", "svn"]:
-                severity = "ALTO"
-                cvss = "7.5"
-                analysis.append(f"[{severity}] CVSS {cvss} - SVN EXPOSTO")
-                analysis.append(f"- Risco: Vazamento de codigo fonte, credenciais em repositorio")
-                analysis.append(f"- Recomendacao: Restringir acesso ou migrar para Git privado")
-
-    analysis.append("")
-    analysis.append("**ANALISE DE RISCOS**")
-    analysis.append("1. [CRITICO] MySQL/MariaDB exposto - Acesso potencial a todos os dados do Moodle")
-    analysis.append("2. [ALTO] SVN exposto - Possivel vazamento de codigo fonte")
-    analysis.append("3. [ALTO] FTP exposto - Protocolo inseguro, risco de captura de credenciais")
-    analysis.append("4. [MEDIO] SSH exposto - Superficie para bruteforce")
-    analysis.append("5. [MEDIO] Apache exposto - Necessario verificacao de configuracao")
-
-    analysis.append("")
-    analysis.append("**RECOMENDACOES PRIORIZADAS**")
-    analysis.append("1. [CRITICO] Restringir MySQL (3306) apenas para IPs autorizados - IMPLEMENTAR IMEDIATAMENTE")
-    analysis.append("2. [ALTO] Fechar porta FTP (21) e SVN (3690) - Migrar para SFTP e Git privado")
-    analysis.append("3. [ALTO] Atualizar MariaDB para 10.6.15+ e OpenSSH para 8.1+")
-    analysis.append("4. [MEDIO] Configurar fail2ban no SSH e desabilitar senhas")
-    analysis.append("5. [MEDIO] Realizar scan web completo com Nuclei e OWASP ZAP")
-
-    analysis.append("")
-    analysis.append("**PROXIMOS PASSOS DE INVESTIGACAO**")
-    analysis.append("1. Testar conexao ao MySQL exposto e verificar se requer autenticacao")
-    analysis.append("2. Executar Nuclei com templates de MySQL, Apache, ProFTPD e SVN")
-    analysis.append("3. Verificar se SVN contem credenciais ou informacoes sensiveis")
-    analysis.append("4. Realizar bruteforce controlado no SSH (com autorizacao)")
-    analysis.append("5. Scan web no Apache para identificar vulnerabilidades (SQLi, XSS, LFI)")
-
-    analysis.append("")
-    analysis.append("**CVSS CONSOLIDADO**")
-    analysis.append("Score geral do alvo: 8.5 (ALTO)")
-    analysis.append("Vetor: AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:L/A:L")
-    analysis.append("Justificativa: Multiplos servicos expostos, incluindo banco de dados acessivel publicamente.")
-
+    analysis.extend([
+        "",
+        "**ANALISE DE RISCOS**",
+        (
+            f"O scan reporta {open_ports} porta(s) aberta(s). Os dados fornecidos "
+            "nao permitem, por si so, confirmar vulnerabilidades especificas nem "
+            "calcular um CVSS consolidado confiavel. Nenhuma CVE foi inferida."
+        ),
+        "",
+        "**RECOMENDACOES**",
+        "1. Confirmar que o alvo e o escopo estao autorizados para avaliacao.",
+        "2. Validar manualmente os servicos e versoes identificados.",
+        "3. Verificar configuracoes, controles de acesso e atualizacoes com evidencias reproduziveis.",
+        "4. Associar CVEs e pontuacoes CVSS somente apos confirmar aplicabilidade.",
+        "",
+        "**LIMITACOES E PROXIMOS PASSOS**",
+        "Esta e uma analise offline preliminar; nao substitui validacao tecnica nem evidencia de explorabilidade.",
+        "---",
+    ])
     return "\n".join(analysis)
-
-
 def display_analysis(analysis: str, target: str):
     """Exibe a analise formatada no terminal."""
 
