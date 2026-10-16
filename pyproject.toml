@@ -7,7 +7,7 @@ name = "goldeneye-security"
 version = "1.0.0"
 description = "Goldeneye - Security Assessment Assistant"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.11"
 authors = [
     {name = "c0unt"}
