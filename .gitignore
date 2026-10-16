@@ -29,3 +29,6 @@ demo.sh
 # Outros
 pulseaudio/
 hydra.restore
+
+# Pacotes de distribuição são gerados no build/CI, não versionados
+/dist/
