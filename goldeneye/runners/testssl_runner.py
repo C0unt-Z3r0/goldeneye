@@ -1,92 +1,125 @@
 """
 goldeneye/runners/testssl_runner.py
-TestSSL - analise de configuracao TLS/SSL.
+Execução e parsing estruturado do testssl.sh.
 """
 
+import json
+import re
 import subprocess
+import tempfile
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List, Optional
+
 from rich.console import Console
 
+from goldeneye.parsers.testssl_parser import parse_testssl_json
+
 console = Console()
+DEFAULT_TIMEOUT_SECONDS = 900
 
 
-def run_testssl(target: str, port: int = 443, output_dir: Path = None) -> List[Dict]:
-    """Executa TestSSL em um alvo."""
-    
-    if output_dir:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_file = output_dir / f"testssl_{target}_{port}.txt"
-    else:
-        output_file = None
-    
-    cmd = ["testssl", "--json-pretty", f"{target}:{port}"]
-    
+def run_testssl(
+    target: str,
+    port: int = 443,
+    output_dir: Optional[Path] = None,
+) -> List[Dict]:
+    """Executa testssl.sh e converte o JSON estruturado em achados.
+
+    O scan é considerado malsucedido quando a ferramenta não existe, excede
+    o timeout ou não produz JSON válido. Nesses casos, retorna lista vazia,
+    mas informa o erro explicitamente — nunca declara o alvo seguro.
+    """
     console.print(f"\n[cyan][*] TestSSL em {target}:{port}...[/cyan]")
-    
-    # Alerta sobre possiveis falsos positivos com CDN/Proxy
-    console.print("[yellow][!] Se houver CDN/Proxy (Cloudflare, etc.), resultados podem conter falsos positivos.[/yellow]")
-    console.print("[grey]    Para resultado preciso, teste diretamente o IP do servidor.[/grey]")
-    
-    results = []
+    console.print(
+        "[yellow][!] CDN/proxy pode afetar os resultados; confirme o escopo "
+        "e a autorização antes de testar o alvo.[/yellow]"
+    )
+
+    safe_target = re.sub(r"[^A-Za-z0-9_.-]+", "_", target).strip("._") or "target"
+
+    if output_dir is not None:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        json_file = output_dir / f"testssl_{safe_target}_{port}.json"
+        return _run_and_parse(target, port, json_file)
+
+    # Sem diretório de saída, mantém o JSON apenas durante o parsing.
+    with tempfile.TemporaryDirectory(prefix="goldeneye-testssl-") as temp_dir:
+        json_file = Path(temp_dir) / f"testssl_{safe_target}_{port}.json"
+        return _run_and_parse(target, port, json_file)
+
+
+def _run_and_parse(target: str, port: int, json_file: Path) -> List[Dict]:
+    cmd = [
+        "testssl",
+        "--jsonfile-pretty",
+        str(json_file),
+        f"{target}:{port}",
+    ]
+
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        
-        vulns = {
-            "Heartbleed": "VULNERABLE",
-            "POODLE": "VULNERABLE", 
-            "FREAK": "VULNERABLE",
-            "DROWN": "VULNERABLE",
-            "LOGJAM": "VULNERABLE",
-            "BEAST": "VULNERABLE",
-            "LUCKY13": "VULNERABLE",
-            "RC4": "offered",
-            "TLS 1.0": "offered",
-            "TLS 1.1": "offered",
-            "SWEET32": "VULNERABLE",
-        }
-        
-        for line in process.stdout:
-            line_stripped = line.strip()
-            
-            # Verificar vulnerabilidades conhecidas
-            for vuln_name, vuln_indicator in vulns.items():
-                if vuln_name.lower() in line_stripped.lower() and vuln_indicator.lower() in line_stripped.lower():
-                    console.print(f"[red][!] {vuln_name}: VULNERAVEL[/red]")
-                    results.append({
-                        "target": f"{target}:{port}",
-                        "vulnerability": vuln_name,
-                        "severity": "HIGH",
-                        "detail": line_stripped[:100],
-                    })
-            
-            # Ciphers fracos
-            if "cipher" in line_stripped.lower() and any(x in line_stripped.lower() for x in ["null", "anon", "export", "des", "rc2", "rc4"]):
-                console.print(f"[yellow][*] Cipher fraco detectado[/yellow]")
-                results.append({
-                    "target": f"{target}:{port}",
-                    "vulnerability": "Cipher Fraco",
-                    "severity": "MEDIUM",
-                    "detail": line_stripped[:100],
-                })
-        
-        process.wait()
-        
-        if results:
-            console.print(f"[red][!] {len(results)} problemas TLS/SSL encontrados![/red]")
-        else:
-            console.print(f"[green][+] Configuracao TLS parece segura.[/green]")
-            
+        process = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            check=False,
+        )
     except FileNotFoundError:
-        console.print("[red][!] TestSSL nao encontrado. Instale: sudo apt install testssl.sh[/red]")
-    except Exception as e:
-        console.print(f"[red][!] Erro: {e}[/red]")
-    
+        console.print(
+            "[red][!] testssl não encontrado. Instale o testssl.sh antes de executar.[/red]"
+        )
+        return []
+    except subprocess.TimeoutExpired:
+        console.print(
+            f"[red][!] TestSSL excedeu o timeout de {DEFAULT_TIMEOUT_SECONDS}s; "
+            "o scan não foi considerado concluído.[/red]"
+        )
+        return []
+    except OSError as exc:
+        console.print(f"[red][!] Não foi possível executar testssl: {exc}[/red]")
+        return []
+
+    if process.returncode != 0:
+        console.print(
+            f"[yellow][!] testssl terminou com código {process.returncode}; "
+            "os resultados serão aceitos somente se o JSON estiver válido.[/yellow]"
+        )
+
+    if not json_file.is_file():
+        console.print(
+            "[red][!] testssl não produziu o arquivo JSON esperado; "
+            "não é possível concluir que o alvo está seguro.[/red]"
+        )
+        if process.stderr:
+            console.print(f"[dim]{process.stderr.strip()[-1000:]}[/dim]")
+        return []
+
+    try:
+        with json_file.open("r", encoding="utf-8") as stream:
+            payload = json.load(stream)
+        results = parse_testssl_json(payload)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        console.print(f"[red][!] Não foi possível interpretar o JSON do testssl: {exc}[/red]")
+        return []
+
+    if results:
+        console.print(f"[red][!] {len(results)} achado(s) TLS/SSL extraído(s) do JSON.[/red]")
+    elif process.returncode == 0:
+        console.print(
+            "[green][+] JSON válido: nenhum problema TLS/SSL acionável foi identificado.[/green]"
+        )
+    else:
+        console.print(
+            "[yellow][!] JSON válido, mas o scan terminou com erro; "
+            "não classifique o alvo como seguro.[/yellow]"
+        )
+
     return results
 
 
 def run_testssl_scan(targets: List[tuple], output_dir: Path) -> List[Dict]:
-    """Executa TestSSL em lote. targets = [(host, port), ...]"""
+    """Executa TestSSL em lote. targets = [(host, port), ...]."""
     all_results = []
     for host, port in targets:
         results = run_testssl(host, port, output_dir)
