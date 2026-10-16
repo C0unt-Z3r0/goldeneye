@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install build and test dependencies
-        run: python -m pip install --upgrade pip build pytest rich jinja2 weasyprint
+        run: python -m pip install --upgrade pip build pytest rich jinja2 weasyprint jinja2 weasyprint
       - name: Audit any committed distributions
         run: |
           if compgen -G "dist/*.whl" > /dev/null && compgen -G "dist/*.tar.gz" > /dev/null; then
@@ -35,4 +35,4 @@ jobs:
       - name: Strictly audit rebuilt distributions
         run: python scripts/audit_distribution.py --strict dist/*.whl dist/*.tar.gz
       - name: Run focused parser and runner tests
-        run: python -m pytest -q tests/test_ai_analyzer.py tests/test_testssl_parser.py tests/test_testssl_runner.py tests/test_scope.py tests/test_pdf_generator.py tests/test_install_metadata.py
+        run: python -m pytest -q tests/test_ai_analyzer.py tests/test_testssl_parser.py tests/test_testssl_runner.py tests/test_scope.py tests/test_pdf_generator.py tests/test_install_metadata.py tests/test_runner_timeouts.py
