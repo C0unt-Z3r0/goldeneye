@@ -411,6 +411,9 @@ class Session:
         elif choice.upper() == "M":
             manual_url = prompt("  URL (ex: http://alvo.com/pagina.php?id=1): ", style=PROMPT_STYLE).strip()
             if manual_url:
+                if not target_in_scope(self.current_scope or "", manual_url):
+                    console.print("[red][!] URL fora do escopo explicitamente declarado; operação cancelada.[/red]")
+                    return
                 targets = [manual_url]
         elif choice.upper() != "A":
             try:
