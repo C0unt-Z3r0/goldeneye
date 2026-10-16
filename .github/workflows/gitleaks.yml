@@ -24,7 +24,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Install Gitleaks
+        run: go install github.com/gitleaks/gitleaks/v8@latest
+
+      - name: Scan complete available Git history
+        run: |
+          "$(go env GOPATH)/bin/gitleaks" git \
+            --redact \
+            --exit-code 2 \
+            --log-opts="--all" \
+            .
