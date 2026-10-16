@@ -9,6 +9,7 @@ from typing import List, Dict
 from rich.console import Console
 
 console = Console()
+DEFAULT_TIMEOUT_SECONDS = 1800
 
 
 def run_nikto(target_url: str, output_dir: Path) -> List[Dict]:
@@ -24,23 +25,29 @@ def run_nikto(target_url: str, output_dir: Path) -> List[Dict]:
     
     results = []
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        
-        for line in process.stdout:
+        output_file.unlink(missing_ok=True)
+        process = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, timeout=DEFAULT_TIMEOUT_SECONDS, check=False,
+        )
+        for line in process.stdout.splitlines():
             line = line.strip()
-            if line and "+" in line:
-                # Filtrar linhas relevantes
-                if any(x in line.lower() for x in ["vulnerab", "outdated", "interesting", "header", "directory", "file", "cookie"]):
-                    console.print(f"[yellow]  {line}[/yellow]")
-                    results.append({"finding": line, "url": target_url})
-        
-        process.wait()
-        
+            if line and "+" in line and any(
+                term in line.lower()
+                for term in ["vulnerab", "outdated", "interesting", "header", "directory", "file", "cookie"]
+            ):
+                console.print(f"[yellow]  {line}[/yellow]")
+                results.append({"finding": line, "url": target_url})
+        if process.returncode != 0:
+            console.print(f"[yellow][!] Nikto terminou com código {process.returncode}.[/yellow]")
+
         if results:
             console.print(f"[green][+] {len(results)} descobertas![/green]")
         else:
             console.print(f"[grey][*] Nenhuma descoberta relevante.[/grey]")
             
+    except subprocess.TimeoutExpired:
+        console.print(f"[red][!] Nikto excedeu {DEFAULT_TIMEOUT_SECONDS}s; resultado inconclusivo.[/red]")
     except FileNotFoundError:
         console.print("[red][!] Nikto nao encontrado. Instale: sudo apt install nikto[/red]")
     except Exception as e:
