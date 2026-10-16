@@ -44,6 +44,8 @@ def run_nmap(
         return None
 
     cmd = ["nmap", *scan_profiles[scan_type]]
+    if ports and scan_type == "quick":
+        cmd = [arg for arg in cmd if arg not in {"--top-ports", "1000"}]
     if os.environ.get("GOLDENEYE_ANON"):
         console.print("[yellow][!] GOLDENEYE_ANON não torna o tráfego anônimo; ele não oculta a origem do scan.[/yellow]")
     if ports == "top100":
