@@ -9,6 +9,7 @@ from typing import List, Dict, Optional
 from rich.console import Console
 
 console = Console()
+DEFAULT_TIMEOUT_SECONDS = 1800
 
 # Wordlist padrao
 WORDLIST_DIR = "/usr/share/wordlists/dirb/common.txt"
@@ -65,15 +66,17 @@ def run_gobuster(
     
     results = []
     try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        
-        for line in process.stdout:
+        output_file.unlink(missing_ok=True)
+        process = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, timeout=DEFAULT_TIMEOUT_SECONDS, check=False,
+        )
+        for line in process.stdout.splitlines():
             line = line.strip()
             if line and "Status:" in line:
                 console.print(f"[green]  {line}[/green]")
-                # Parse: /path (Status: 200) [Size: 1234]
                 import re
-                match = re.search(r'/(\S+)\s+\(Status:\s*(\d+)\)\s*\[Size:\s*(\d+)\]', line)
+                match = re.search(r'/(\\S+)\\s+\\(Status:\\s*(\\d+)\\)\\s*\\[Size:\\s*(\\d+)\\]', line)
                 if match:
                     results.append({
                         "path": match.group(1),
@@ -81,14 +84,16 @@ def run_gobuster(
                         "status": int(match.group(2)),
                         "size": int(match.group(3)),
                     })
-        
-        process.wait()
-        
+        if process.returncode != 0:
+            console.print(f"[yellow][!] Gobuster terminou com código {process.returncode}.[/yellow]")
+
         if results:
             console.print(f"[green][+] {len(results)} diretorios/arquivos encontrados![/green]")
         else:
             console.print(f"[grey][*] Nenhum resultado.[/grey]")
             
+    except subprocess.TimeoutExpired:
+        console.print(f"[red][!] Gobuster excedeu {DEFAULT_TIMEOUT_SECONDS}s; resultado inconclusivo.[/red]")
     except FileNotFoundError:
         console.print("[red][!] Gobuster nao encontrado. Instale: sudo apt install gobuster[/red]")
     except Exception as e:
